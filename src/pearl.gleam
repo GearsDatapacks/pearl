@@ -124,6 +124,33 @@ fn next(lexer: Lexer) -> #(Lexer, Token) {
     "!" <> source -> #(advance(lexer, source), token.Bang)
     "=" <> source -> #(advance(lexer, source), token.Equal)
 
+    "a" as char <> source
+    | "b" as char <> source
+    | "c" as char <> source
+    | "d" as char <> source
+    | "e" as char <> source
+    | "f" as char <> source
+    | "g" as char <> source
+    | "h" as char <> source
+    | "i" as char <> source
+    | "j" as char <> source
+    | "k" as char <> source
+    | "l" as char <> source
+    | "m" as char <> source
+    | "n" as char <> source
+    | "o" as char <> source
+    | "p" as char <> source
+    | "q" as char <> source
+    | "r" as char <> source
+    | "s" as char <> source
+    | "t" as char <> source
+    | "u" as char <> source
+    | "v" as char <> source
+    | "w" as char <> source
+    | "x" as char <> source
+    | "y" as char <> source
+    | "z" as char <> source -> lex_atom(advance(lexer, source), char)
+
     _ ->
       case string.pop_grapheme(lexer.source) {
         Error(_) -> #(lexer, token.EndOfFile)
@@ -132,6 +159,112 @@ fn next(lexer: Lexer) -> #(Lexer, Token) {
           token.Unknown(char),
         )
       }
+  }
+}
+
+fn lex_atom(lexer: Lexer, lexed: String) -> #(Lexer, Token) {
+  case lexer.source {
+    "a" as char <> source
+    | "b" as char <> source
+    | "c" as char <> source
+    | "d" as char <> source
+    | "e" as char <> source
+    | "f" as char <> source
+    | "g" as char <> source
+    | "h" as char <> source
+    | "i" as char <> source
+    | "j" as char <> source
+    | "k" as char <> source
+    | "l" as char <> source
+    | "m" as char <> source
+    | "n" as char <> source
+    | "o" as char <> source
+    | "p" as char <> source
+    | "q" as char <> source
+    | "r" as char <> source
+    | "s" as char <> source
+    | "t" as char <> source
+    | "u" as char <> source
+    | "v" as char <> source
+    | "w" as char <> source
+    | "x" as char <> source
+    | "y" as char <> source
+    | "z" as char <> source
+    | "A" as char <> source
+    | "B" as char <> source
+    | "C" as char <> source
+    | "D" as char <> source
+    | "E" as char <> source
+    | "F" as char <> source
+    | "G" as char <> source
+    | "H" as char <> source
+    | "I" as char <> source
+    | "J" as char <> source
+    | "K" as char <> source
+    | "L" as char <> source
+    | "M" as char <> source
+    | "N" as char <> source
+    | "O" as char <> source
+    | "P" as char <> source
+    | "Q" as char <> source
+    | "R" as char <> source
+    | "S" as char <> source
+    | "T" as char <> source
+    | "U" as char <> source
+    | "V" as char <> source
+    | "W" as char <> source
+    | "X" as char <> source
+    | "Y" as char <> source
+    | "Z" as char <> source
+    | "0" as char <> source
+    | "1" as char <> source
+    | "2" as char <> source
+    | "3" as char <> source
+    | "4" as char <> source
+    | "5" as char <> source
+    | "6" as char <> source
+    | "7" as char <> source
+    | "8" as char <> source
+    | "9" as char <> source
+    | "_" as char <> source
+    | "@" as char <> source -> lex_atom(advance(lexer, source), lexed <> char)
+
+    _ -> {
+      let token = case lexed {
+        "after" -> token.After
+        "begin" -> token.Begin
+        "case" -> token.Case
+        "catch" -> token.Catch
+        "cond" -> token.Cond
+        "else" -> token.Else
+        "end" -> token.End
+        "fun" -> token.Fun
+        "if" -> token.If
+        "let" -> token.Let
+        "maybe" -> token.Maybe
+        "of" -> token.Of
+        "receive" -> token.Receive
+        "try" -> token.Try
+        "when" -> token.When
+        "bnot" -> token.Bnot
+        "div" -> token.Div
+        "rem" -> token.Rem
+        "band" -> token.Band
+        "bor" -> token.Bor
+        "bxor" -> token.Bxor
+        "bsl" -> token.Bsl
+        "bsr" -> token.Bsr
+        "not" -> token.Not
+        "and" -> token.And
+        "or" -> token.Or
+        "xor" -> token.Xor
+        "andalso" -> token.Andalso
+        "orelse" -> token.Orelse
+
+        _ -> token.Atom(lexed, False)
+      }
+      #(lexer, token)
+    }
   }
 }
 
