@@ -14,11 +14,17 @@ pub opaque type Lexer {
 }
 
 type Splitters {
-  Splitters(until_end_of_line: Splitter)
+  Splitters(
+    until_end_of_line: Splitter,
+    string: Splitter,
+    quoted_atom: Splitter,
+  )
 }
 
 pub type Error {
   UnknownCharacter(character: String)
+  UnterminatedString
+  UnterminatedAtom
 }
 
 pub fn new(source: String) -> Lexer {
@@ -32,7 +38,11 @@ pub fn new(source: String) -> Lexer {
 }
 
 fn make_splitters() -> Splitters {
-  Splitters(until_end_of_line: splitter.new(["\n", "\r"]))
+  Splitters(
+    until_end_of_line: splitter.new(["\n", "\r"]),
+    string: splitter.new(["\"", "\\"]),
+    quoted_atom: splitter.new(["'", "\\"]),
+  )
 }
 
 pub fn ignore_comments(lexer: Lexer) -> Lexer {
@@ -151,6 +161,9 @@ fn next(lexer: Lexer) -> #(Lexer, Token) {
     | "y" as char <> source
     | "z" as char <> source -> lex_atom(advance(lexer, source), char)
 
+    "\"" <> source -> lex_string(advance(lexer, source), "")
+    "'" <> source -> lex_quoted_atom(advance(lexer, source), "")
+
     _ ->
       case string.pop_grapheme(lexer.source) {
         Error(_) -> #(lexer, token.EndOfFile)
@@ -159,6 +172,58 @@ fn next(lexer: Lexer) -> #(Lexer, Token) {
           token.Unknown(char),
         )
       }
+  }
+}
+
+fn lex_string(lexer: Lexer, contents: String) -> #(Lexer, Token) {
+  let #(before, split, after) =
+    splitter.split(lexer.splitters.string, lexer.source)
+  case split {
+    "" -> #(
+      error(advance(lexer, after), UnterminatedString),
+      token.UnterminatedString(contents <> before),
+    )
+
+    "\\" ->
+      case string.pop_grapheme(after) {
+        Error(_) -> #(
+          error(advance(lexer, after), UnterminatedString),
+          token.UnterminatedString(contents),
+        )
+        Ok(#(character, source)) ->
+          lex_string(
+            advance(lexer, source),
+            contents <> before <> "\\" <> character,
+          )
+      }
+
+    _ -> #(advance(lexer, after), token.String(contents <> before))
+  }
+}
+
+fn lex_quoted_atom(lexer: Lexer, contents: String) -> #(Lexer, Token) {
+  let #(before, split, after) =
+    splitter.split(lexer.splitters.quoted_atom, lexer.source)
+  case split {
+    "" -> #(
+      error(advance(lexer, after), UnterminatedAtom),
+      token.UnterminatedAtom(contents <> before),
+    )
+
+    "\\" ->
+      case string.pop_grapheme(after) {
+        Error(_) -> #(
+          error(advance(lexer, after), UnterminatedString),
+          token.UnterminatedString(contents),
+        )
+        Ok(#(character, source)) ->
+          lex_string(
+            advance(lexer, source),
+            contents <> before <> "\\" <> character,
+          )
+      }
+
+    _ -> #(advance(lexer, after), token.Atom(contents <> before, True))
   }
 }
 

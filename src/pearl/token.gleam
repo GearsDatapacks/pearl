@@ -94,6 +94,8 @@ pub type Token {
 
   // Invalid tokens
   Unknown(String)
+  UnterminatedString(String)
+  UnterminatedAtom(String)
 }
 
 pub fn to_source(token: Token) -> String {
@@ -195,5 +197,7 @@ pub fn to_source(token: Token) -> String {
 
     // Invalid tokens
     Unknown(char) -> char
+    UnterminatedString(contents) -> "\"" <> contents
+    UnterminatedAtom(contents) -> "'" <> contents
   }
 }
