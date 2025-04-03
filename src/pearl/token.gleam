@@ -2,6 +2,8 @@ pub type Token {
   // Whitespace and comments
   Whitespace(String)
   Comment(String)
+  DocComment(String)
+  ModuleComment(String)
   EndOfFile
 
   Char(String)
@@ -99,6 +101,8 @@ pub fn to_source(token: Token) -> String {
     // Whitespace and comments
     Whitespace(space) -> space
     Comment(contents) -> "%" <> contents
+    DocComment(contents) -> "%%" <> contents
+    ModuleComment(contents) -> "%%%" <> contents
     EndOfFile -> ""
 
     Char(char) -> "$" <> char

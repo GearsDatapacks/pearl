@@ -1,6 +1,7 @@
 import gleam/list
 import gleam/string
 import pearl/token.{type Token}
+import splitter.{type Splitter}
 
 pub opaque type Lexer {
   Lexer(
@@ -13,7 +14,7 @@ pub opaque type Lexer {
 }
 
 type Splitters {
-  Splitters
+  Splitters(until_end_of_line: Splitter)
 }
 
 pub type Error {
@@ -31,7 +32,7 @@ pub fn new(source: String) -> Lexer {
 }
 
 fn make_splitters() -> Splitters {
-  Splitters
+  Splitters(until_end_of_line: splitter.new(["\n", "\r"]))
 }
 
 pub fn ignore_comments(lexer: Lexer) -> Lexer {
@@ -59,6 +60,26 @@ fn do_tokenise(lexer: Lexer, tokens: List(Token)) -> #(List(Token), List(Error))
 fn next(lexer: Lexer) -> #(Lexer, Token) {
   case lexer.source {
     "" -> #(lexer, token.EndOfFile)
+
+    " " as space <> source
+    | "\n" as space <> source
+    | "\r" as space <> source
+    | "\t" as space <> source
+    | "\f" as space <> source -> lex_whitespace(advance(lexer, source), space)
+
+    "%%%" <> source -> {
+      let #(lexer, contents) = lex_until_end_of_line(advance(lexer, source))
+      maybe_token(lexer, token.ModuleComment(contents), !lexer.ignore_comments)
+    }
+    "%%" <> source -> {
+      let #(lexer, contents) = lex_until_end_of_line(advance(lexer, source))
+      maybe_token(lexer, token.DocComment(contents), !lexer.ignore_comments)
+    }
+    "%" <> source -> {
+      let #(lexer, contents) = lex_until_end_of_line(advance(lexer, source))
+      maybe_token(lexer, token.Comment(contents), !lexer.ignore_comments)
+    }
+
     _ ->
       case string.pop_grapheme(lexer.source) {
         Error(_) -> #(lexer, token.EndOfFile)
@@ -67,6 +88,31 @@ fn next(lexer: Lexer) -> #(Lexer, Token) {
           token.Unknown(char),
         )
       }
+  }
+}
+
+fn lex_until_end_of_line(lexer: Lexer) -> #(Lexer, String) {
+  let #(before, split, after) =
+    splitter.split(lexer.splitters.until_end_of_line, lexer.source)
+  #(advance(lexer, split <> after), before)
+}
+
+fn lex_whitespace(lexer: Lexer, lexed: String) -> #(Lexer, Token) {
+  case lexer.source {
+    " " as space <> source
+    | "\n" as space <> source
+    | "\r" as space <> source
+    | "\t" as space <> source
+    | "\f" as space <> source ->
+      lex_whitespace(advance(lexer, source), lexed <> space)
+    _ -> maybe_token(lexer, token.Whitespace(lexed), !lexer.ignore_whitespace)
+  }
+}
+
+fn maybe_token(lexer: Lexer, token: Token, condition: Bool) -> #(Lexer, Token) {
+  case condition {
+    True -> #(lexer, token)
+    False -> next(lexer)
   }
 }
 
