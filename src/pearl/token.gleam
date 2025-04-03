@@ -89,6 +89,9 @@ pub type Token {
   QuestionEqual
   Bang
   Equal
+
+  // Invalid tokens
+  Unknown(String)
 }
 
 pub fn to_source(token: Token) -> String {
@@ -185,5 +188,8 @@ pub fn to_source(token: Token) -> String {
     QuestionEqual -> "?="
     Bang -> "!"
     Equal -> "="
+
+    // Invalid tokens
+    Unknown(char) -> char
   }
 }
