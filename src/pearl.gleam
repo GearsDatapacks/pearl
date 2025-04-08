@@ -161,6 +161,34 @@ fn next(lexer: Lexer) -> #(Lexer, Token) {
     | "y" as char <> source
     | "z" as char <> source -> lex_atom(advance(lexer, source), char)
 
+    "A" as char <> source
+    | "B" as char <> source
+    | "C" as char <> source
+    | "D" as char <> source
+    | "E" as char <> source
+    | "F" as char <> source
+    | "G" as char <> source
+    | "H" as char <> source
+    | "I" as char <> source
+    | "J" as char <> source
+    | "K" as char <> source
+    | "L" as char <> source
+    | "M" as char <> source
+    | "N" as char <> source
+    | "O" as char <> source
+    | "P" as char <> source
+    | "Q" as char <> source
+    | "R" as char <> source
+    | "S" as char <> source
+    | "T" as char <> source
+    | "U" as char <> source
+    | "V" as char <> source
+    | "W" as char <> source
+    | "X" as char <> source
+    | "Y" as char <> source
+    | "Z" as char <> source
+    | "_" as char <> source -> lex_variable(advance(lexer, source), char)
+
     "\"" <> source -> lex_string(advance(lexer, source), "")
     "'" <> source -> lex_quoted_atom(advance(lexer, source), "")
 
@@ -227,7 +255,7 @@ fn lex_quoted_atom(lexer: Lexer, contents: String) -> #(Lexer, Token) {
   }
 }
 
-fn lex_atom(lexer: Lexer, lexed: String) -> #(Lexer, Token) {
+fn lex_variable_or_atom(lexer: Lexer, lexed: String) -> #(Lexer, String) {
   case lexer.source {
     "a" as char <> source
     | "b" as char <> source
@@ -292,45 +320,55 @@ fn lex_atom(lexer: Lexer, lexed: String) -> #(Lexer, Token) {
     | "8" as char <> source
     | "9" as char <> source
     | "_" as char <> source
-    | "@" as char <> source -> lex_atom(advance(lexer, source), lexed <> char)
+    | "@" as char <> source ->
+      lex_variable_or_atom(advance(lexer, source), lexed <> char)
 
-    _ -> {
-      let token = case lexed {
-        "after" -> token.After
-        "begin" -> token.Begin
-        "case" -> token.Case
-        "catch" -> token.Catch
-        "cond" -> token.Cond
-        "else" -> token.Else
-        "end" -> token.End
-        "fun" -> token.Fun
-        "if" -> token.If
-        "let" -> token.Let
-        "maybe" -> token.Maybe
-        "of" -> token.Of
-        "receive" -> token.Receive
-        "try" -> token.Try
-        "when" -> token.When
-        "bnot" -> token.Bnot
-        "div" -> token.Div
-        "rem" -> token.Rem
-        "band" -> token.Band
-        "bor" -> token.Bor
-        "bxor" -> token.Bxor
-        "bsl" -> token.Bsl
-        "bsr" -> token.Bsr
-        "not" -> token.Not
-        "and" -> token.And
-        "or" -> token.Or
-        "xor" -> token.Xor
-        "andalso" -> token.Andalso
-        "orelse" -> token.Orelse
-
-        _ -> token.Atom(lexed, False)
-      }
-      #(lexer, token)
-    }
+    _ -> #(lexer, lexed)
   }
+}
+
+fn lex_variable(lexer: Lexer, char: String) -> #(Lexer, Token) {
+  let #(lexer, name) = lex_variable_or_atom(lexer, char)
+  #(lexer, token.Variable(name))
+}
+
+fn lex_atom(lexer: Lexer, char: String) -> #(Lexer, Token) {
+  let #(lexer, name) = lex_variable_or_atom(lexer, char)
+
+  let token = case name {
+    "after" -> token.After
+    "begin" -> token.Begin
+    "case" -> token.Case
+    "catch" -> token.Catch
+    "cond" -> token.Cond
+    "else" -> token.Else
+    "end" -> token.End
+    "fun" -> token.Fun
+    "if" -> token.If
+    "let" -> token.Let
+    "maybe" -> token.Maybe
+    "of" -> token.Of
+    "receive" -> token.Receive
+    "try" -> token.Try
+    "when" -> token.When
+    "bnot" -> token.Bnot
+    "div" -> token.Div
+    "rem" -> token.Rem
+    "band" -> token.Band
+    "bor" -> token.Bor
+    "bxor" -> token.Bxor
+    "bsl" -> token.Bsl
+    "bsr" -> token.Bsr
+    "not" -> token.Not
+    "and" -> token.And
+    "or" -> token.Or
+    "xor" -> token.Xor
+    "andalso" -> token.Andalso
+    "orelse" -> token.Orelse
+
+    _ -> token.Atom(name, False)
+  }
+  #(lexer, token)
 }
 
 fn lex_until_end_of_line(lexer: Lexer) -> #(Lexer, String) {
