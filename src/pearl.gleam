@@ -27,6 +27,9 @@ pub type Error {
   UnterminatedString
   UnterminatedAtom
   InvalidRadix(radix: String)
+  NumericSeparatorNotAllowed
+  ExpectedExponent
+  NumbersCannotEndAfterRadix
 }
 
 pub fn new(source: String) -> Lexer {
@@ -200,7 +203,8 @@ fn next(lexer: Lexer) -> #(Lexer, Token) {
     | "6" as char <> source
     | "7" as char <> source
     | "8" as char <> source
-    | "9" as char <> source -> lex_number(advance(lexer, source), char, Initial)
+    | "9" as char <> source ->
+      lex_number(advance(lexer, source), char, Initial, AfterNumber)
 
     "\"" <> source -> lex_string(advance(lexer, source), "")
     "'" <> source -> lex_quoted_atom(advance(lexer, source), "")
@@ -219,92 +223,103 @@ fn next(lexer: Lexer) -> #(Lexer, Token) {
 type LexNumberMode {
   Initial
   Radix(Int)
+  Decimal
+  Exponent
+}
+
+type DelimitedPosition {
+  AfterDecimal
+  AfterNumber
+  AfterSeparator
+  AfterExponent
+  AfterRadix
 }
 
 fn lex_number(
   lexer: Lexer,
   lexed: String,
   mode: LexNumberMode,
+  position: DelimitedPosition,
 ) -> #(Lexer, Token) {
   let radix = case mode {
-    Initial -> 10
     Radix(r) -> r
+    Initial | Decimal | Exponent -> 10
   }
 
   case lexer.source {
     "0" as char <> source | "1" as char <> source ->
-      lex_number(advance(lexer, source), lexed <> char, mode)
+      lex_number(advance(lexer, source), lexed <> char, mode, AfterNumber)
     "2" as char <> source if radix >= 3 ->
-      lex_number(advance(lexer, source), lexed <> char, mode)
+      lex_number(advance(lexer, source), lexed <> char, mode, AfterNumber)
     "3" as char <> source if radix >= 4 ->
-      lex_number(advance(lexer, source), lexed <> char, mode)
+      lex_number(advance(lexer, source), lexed <> char, mode, AfterNumber)
     "4" as char <> source if radix >= 5 ->
-      lex_number(advance(lexer, source), lexed <> char, mode)
+      lex_number(advance(lexer, source), lexed <> char, mode, AfterNumber)
     "5" as char <> source if radix >= 6 ->
-      lex_number(advance(lexer, source), lexed <> char, mode)
+      lex_number(advance(lexer, source), lexed <> char, mode, AfterNumber)
     "6" as char <> source if radix >= 7 ->
-      lex_number(advance(lexer, source), lexed <> char, mode)
+      lex_number(advance(lexer, source), lexed <> char, mode, AfterNumber)
     "7" as char <> source if radix >= 8 ->
-      lex_number(advance(lexer, source), lexed <> char, mode)
+      lex_number(advance(lexer, source), lexed <> char, mode, AfterNumber)
     "8" as char <> source if radix >= 9 ->
-      lex_number(advance(lexer, source), lexed <> char, mode)
+      lex_number(advance(lexer, source), lexed <> char, mode, AfterNumber)
     "9" as char <> source if radix >= 10 ->
-      lex_number(advance(lexer, source), lexed <> char, mode)
+      lex_number(advance(lexer, source), lexed <> char, mode, AfterNumber)
     "a" as char <> source | "A" as char <> source if radix >= 11 ->
-      lex_number(advance(lexer, source), lexed <> char, mode)
+      lex_number(advance(lexer, source), lexed <> char, mode, AfterNumber)
     "b" as char <> source | "B" as char <> source if radix >= 12 ->
-      lex_number(advance(lexer, source), lexed <> char, mode)
+      lex_number(advance(lexer, source), lexed <> char, mode, AfterNumber)
     "c" as char <> source | "C" as char <> source if radix >= 13 ->
-      lex_number(advance(lexer, source), lexed <> char, mode)
+      lex_number(advance(lexer, source), lexed <> char, mode, AfterNumber)
     "d" as char <> source | "D" as char <> source if radix >= 14 ->
-      lex_number(advance(lexer, source), lexed <> char, mode)
+      lex_number(advance(lexer, source), lexed <> char, mode, AfterNumber)
     "e" as char <> source | "E" as char <> source if radix >= 15 ->
-      lex_number(advance(lexer, source), lexed <> char, mode)
+      lex_number(advance(lexer, source), lexed <> char, mode, AfterNumber)
     "f" as char <> source | "F" as char <> source if radix >= 16 ->
-      lex_number(advance(lexer, source), lexed <> char, mode)
+      lex_number(advance(lexer, source), lexed <> char, mode, AfterNumber)
     "g" as char <> source | "G" as char <> source if radix >= 17 ->
-      lex_number(advance(lexer, source), lexed <> char, mode)
+      lex_number(advance(lexer, source), lexed <> char, mode, AfterNumber)
     "h" as char <> source | "H" as char <> source if radix >= 18 ->
-      lex_number(advance(lexer, source), lexed <> char, mode)
+      lex_number(advance(lexer, source), lexed <> char, mode, AfterNumber)
     "i" as char <> source | "I" as char <> source if radix >= 19 ->
-      lex_number(advance(lexer, source), lexed <> char, mode)
+      lex_number(advance(lexer, source), lexed <> char, mode, AfterNumber)
     "j" as char <> source | "J" as char <> source if radix >= 20 ->
-      lex_number(advance(lexer, source), lexed <> char, mode)
+      lex_number(advance(lexer, source), lexed <> char, mode, AfterNumber)
     "k" as char <> source | "K" as char <> source if radix >= 21 ->
-      lex_number(advance(lexer, source), lexed <> char, mode)
+      lex_number(advance(lexer, source), lexed <> char, mode, AfterNumber)
     "l" as char <> source | "L" as char <> source if radix >= 22 ->
-      lex_number(advance(lexer, source), lexed <> char, mode)
+      lex_number(advance(lexer, source), lexed <> char, mode, AfterNumber)
     "m" as char <> source | "M" as char <> source if radix >= 23 ->
-      lex_number(advance(lexer, source), lexed <> char, mode)
+      lex_number(advance(lexer, source), lexed <> char, mode, AfterNumber)
     "n" as char <> source | "N" as char <> source if radix >= 24 ->
-      lex_number(advance(lexer, source), lexed <> char, mode)
+      lex_number(advance(lexer, source), lexed <> char, mode, AfterNumber)
     "o" as char <> source | "O" as char <> source if radix >= 25 ->
-      lex_number(advance(lexer, source), lexed <> char, mode)
+      lex_number(advance(lexer, source), lexed <> char, mode, AfterNumber)
     "p" as char <> source | "P" as char <> source if radix >= 26 ->
-      lex_number(advance(lexer, source), lexed <> char, mode)
+      lex_number(advance(lexer, source), lexed <> char, mode, AfterNumber)
     "q" as char <> source | "Q" as char <> source if radix >= 27 ->
-      lex_number(advance(lexer, source), lexed <> char, mode)
+      lex_number(advance(lexer, source), lexed <> char, mode, AfterNumber)
     "r" as char <> source | "R" as char <> source if radix >= 28 ->
-      lex_number(advance(lexer, source), lexed <> char, mode)
+      lex_number(advance(lexer, source), lexed <> char, mode, AfterNumber)
     "s" as char <> source | "S" as char <> source if radix >= 29 ->
-      lex_number(advance(lexer, source), lexed <> char, mode)
+      lex_number(advance(lexer, source), lexed <> char, mode, AfterNumber)
     "t" as char <> source | "T" as char <> source if radix >= 30 ->
-      lex_number(advance(lexer, source), lexed <> char, mode)
+      lex_number(advance(lexer, source), lexed <> char, mode, AfterNumber)
     "u" as char <> source | "U" as char <> source if radix >= 31 ->
-      lex_number(advance(lexer, source), lexed <> char, mode)
+      lex_number(advance(lexer, source), lexed <> char, mode, AfterNumber)
     "v" as char <> source | "V" as char <> source if radix >= 32 ->
-      lex_number(advance(lexer, source), lexed <> char, mode)
+      lex_number(advance(lexer, source), lexed <> char, mode, AfterNumber)
     "w" as char <> source | "W" as char <> source if radix >= 33 ->
-      lex_number(advance(lexer, source), lexed <> char, mode)
+      lex_number(advance(lexer, source), lexed <> char, mode, AfterNumber)
     "x" as char <> source | "X" as char <> source if radix >= 34 ->
-      lex_number(advance(lexer, source), lexed <> char, mode)
+      lex_number(advance(lexer, source), lexed <> char, mode, AfterNumber)
     "y" as char <> source | "Y" as char <> source if radix >= 35 ->
-      lex_number(advance(lexer, source), lexed <> char, mode)
+      lex_number(advance(lexer, source), lexed <> char, mode, AfterNumber)
     "z" as char <> source | "Z" as char <> source if radix >= 36 ->
-      lex_number(advance(lexer, source), lexed <> char, mode)
+      lex_number(advance(lexer, source), lexed <> char, mode, AfterNumber)
 
-    "#" <> source if mode == Initial ->
-      case int.parse(lexed) {
+    "#" <> source if mode == Initial && position == AfterNumber ->
+      case int.parse(string.replace(in: lexed, each: "_", with: "")) {
         Error(_) -> #(
           error(advance(lexer, source), InvalidRadix(lexed)),
           token.Integer(lexed),
@@ -314,10 +329,56 @@ fn lex_number(
           token.Integer(lexed),
         )
         Ok(radix) ->
-          lex_number(advance(lexer, source), lexed <> "#", Radix(radix))
+          lex_number(
+            advance(lexer, source),
+            lexed <> "#",
+            Radix(radix),
+            AfterRadix,
+          )
       }
 
-    _ -> #(lexer, token.Integer(lexed))
+    "_" <> source if position == AfterNumber ->
+      lex_number(advance(lexer, source), lexed <> "_", mode, AfterSeparator)
+
+    "_" <> _ -> #(
+      error(lexer, NumericSeparatorNotAllowed),
+      token.Integer(lexed),
+    )
+
+    "." <> source if mode == Initial && position == AfterNumber ->
+      lex_number(advance(lexer, source), lexed <> ".", Decimal, AfterDecimal)
+
+    "e-" as prefix <> source
+      | "e" as prefix <> source
+      | "E-" as prefix <> source
+      | "E" as prefix <> source
+      if mode == Decimal && position == AfterNumber
+    ->
+      lex_number(
+        advance(lexer, source),
+        lexed <> prefix,
+        Exponent,
+        AfterExponent,
+      )
+
+    _ -> {
+      let token = case mode {
+        Decimal | Exponent -> token.Float(lexed)
+        Initial | Radix(_) -> token.Integer(lexed)
+      }
+      case position {
+        // If we have some code that looks like `15.`, that is valid syntax,
+        // but it's an integer followed by a dot, not a float.
+        AfterDecimal -> #(
+          advance(lexer, "." <> lexer.source),
+          token.Integer(string.drop_end(lexed, 1)),
+        )
+        AfterExponent -> #(error(lexer, ExpectedExponent), token)
+        AfterRadix -> #(error(lexer, NumbersCannotEndAfterRadix), token)
+        AfterNumber -> #(lexer, token)
+        AfterSeparator -> #(error(lexer, NumericSeparatorNotAllowed), token)
+      }
+    }
   }
 }
 
