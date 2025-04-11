@@ -1,3 +1,4 @@
+import gleam/int
 import gleam/list
 import gleam/string
 import pearl/token.{type Token}
@@ -25,6 +26,7 @@ pub type Error {
   UnknownCharacter(character: String)
   UnterminatedString
   UnterminatedAtom
+  InvalidRadix(radix: String)
 }
 
 pub fn new(source: String) -> Lexer {
@@ -189,6 +191,17 @@ fn next(lexer: Lexer) -> #(Lexer, Token) {
     | "Z" as char <> source
     | "_" as char <> source -> lex_variable(advance(lexer, source), char)
 
+    "0" as char <> source
+    | "1" as char <> source
+    | "2" as char <> source
+    | "3" as char <> source
+    | "4" as char <> source
+    | "5" as char <> source
+    | "6" as char <> source
+    | "7" as char <> source
+    | "8" as char <> source
+    | "9" as char <> source -> lex_number(advance(lexer, source), char, Initial)
+
     "\"" <> source -> lex_string(advance(lexer, source), "")
     "'" <> source -> lex_quoted_atom(advance(lexer, source), "")
 
@@ -200,6 +213,111 @@ fn next(lexer: Lexer) -> #(Lexer, Token) {
           token.Unknown(char),
         )
       }
+  }
+}
+
+type LexNumberMode {
+  Initial
+  Radix(Int)
+}
+
+fn lex_number(
+  lexer: Lexer,
+  lexed: String,
+  mode: LexNumberMode,
+) -> #(Lexer, Token) {
+  let radix = case mode {
+    Initial -> 10
+    Radix(r) -> r
+  }
+
+  case lexer.source {
+    "0" as char <> source | "1" as char <> source ->
+      lex_number(advance(lexer, source), lexed <> char, mode)
+    "2" as char <> source if radix >= 3 ->
+      lex_number(advance(lexer, source), lexed <> char, mode)
+    "3" as char <> source if radix >= 4 ->
+      lex_number(advance(lexer, source), lexed <> char, mode)
+    "4" as char <> source if radix >= 5 ->
+      lex_number(advance(lexer, source), lexed <> char, mode)
+    "5" as char <> source if radix >= 6 ->
+      lex_number(advance(lexer, source), lexed <> char, mode)
+    "6" as char <> source if radix >= 7 ->
+      lex_number(advance(lexer, source), lexed <> char, mode)
+    "7" as char <> source if radix >= 8 ->
+      lex_number(advance(lexer, source), lexed <> char, mode)
+    "8" as char <> source if radix >= 9 ->
+      lex_number(advance(lexer, source), lexed <> char, mode)
+    "9" as char <> source if radix >= 10 ->
+      lex_number(advance(lexer, source), lexed <> char, mode)
+    "a" as char <> source | "A" as char <> source if radix >= 11 ->
+      lex_number(advance(lexer, source), lexed <> char, mode)
+    "b" as char <> source | "B" as char <> source if radix >= 12 ->
+      lex_number(advance(lexer, source), lexed <> char, mode)
+    "c" as char <> source | "C" as char <> source if radix >= 13 ->
+      lex_number(advance(lexer, source), lexed <> char, mode)
+    "d" as char <> source | "D" as char <> source if radix >= 14 ->
+      lex_number(advance(lexer, source), lexed <> char, mode)
+    "e" as char <> source | "E" as char <> source if radix >= 15 ->
+      lex_number(advance(lexer, source), lexed <> char, mode)
+    "f" as char <> source | "F" as char <> source if radix >= 16 ->
+      lex_number(advance(lexer, source), lexed <> char, mode)
+    "g" as char <> source | "G" as char <> source if radix >= 17 ->
+      lex_number(advance(lexer, source), lexed <> char, mode)
+    "h" as char <> source | "H" as char <> source if radix >= 18 ->
+      lex_number(advance(lexer, source), lexed <> char, mode)
+    "i" as char <> source | "I" as char <> source if radix >= 19 ->
+      lex_number(advance(lexer, source), lexed <> char, mode)
+    "j" as char <> source | "J" as char <> source if radix >= 20 ->
+      lex_number(advance(lexer, source), lexed <> char, mode)
+    "k" as char <> source | "K" as char <> source if radix >= 21 ->
+      lex_number(advance(lexer, source), lexed <> char, mode)
+    "l" as char <> source | "L" as char <> source if radix >= 22 ->
+      lex_number(advance(lexer, source), lexed <> char, mode)
+    "m" as char <> source | "M" as char <> source if radix >= 23 ->
+      lex_number(advance(lexer, source), lexed <> char, mode)
+    "n" as char <> source | "N" as char <> source if radix >= 24 ->
+      lex_number(advance(lexer, source), lexed <> char, mode)
+    "o" as char <> source | "O" as char <> source if radix >= 25 ->
+      lex_number(advance(lexer, source), lexed <> char, mode)
+    "p" as char <> source | "P" as char <> source if radix >= 26 ->
+      lex_number(advance(lexer, source), lexed <> char, mode)
+    "q" as char <> source | "Q" as char <> source if radix >= 27 ->
+      lex_number(advance(lexer, source), lexed <> char, mode)
+    "r" as char <> source | "R" as char <> source if radix >= 28 ->
+      lex_number(advance(lexer, source), lexed <> char, mode)
+    "s" as char <> source | "S" as char <> source if radix >= 29 ->
+      lex_number(advance(lexer, source), lexed <> char, mode)
+    "t" as char <> source | "T" as char <> source if radix >= 30 ->
+      lex_number(advance(lexer, source), lexed <> char, mode)
+    "u" as char <> source | "U" as char <> source if radix >= 31 ->
+      lex_number(advance(lexer, source), lexed <> char, mode)
+    "v" as char <> source | "V" as char <> source if radix >= 32 ->
+      lex_number(advance(lexer, source), lexed <> char, mode)
+    "w" as char <> source | "W" as char <> source if radix >= 33 ->
+      lex_number(advance(lexer, source), lexed <> char, mode)
+    "x" as char <> source | "X" as char <> source if radix >= 34 ->
+      lex_number(advance(lexer, source), lexed <> char, mode)
+    "y" as char <> source | "Y" as char <> source if radix >= 35 ->
+      lex_number(advance(lexer, source), lexed <> char, mode)
+    "z" as char <> source | "Z" as char <> source if radix >= 36 ->
+      lex_number(advance(lexer, source), lexed <> char, mode)
+
+    "#" <> source if mode == Initial ->
+      case int.parse(lexed) {
+        Error(_) -> #(
+          error(advance(lexer, source), InvalidRadix(lexed)),
+          token.Integer(lexed),
+        )
+        Ok(radix) if radix < 2 || radix > 36 -> #(
+          error(advance(lexer, source), InvalidRadix(lexed)),
+          token.Integer(lexed),
+        )
+        Ok(radix) ->
+          lex_number(advance(lexer, source), lexed <> "#", Radix(radix))
+      }
+
+    _ -> #(lexer, token.Integer(lexed))
   }
 }
 
