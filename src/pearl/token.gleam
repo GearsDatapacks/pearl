@@ -6,7 +6,7 @@ pub type Token {
   ModuleComment(String)
   EndOfFile
 
-  Char(String)
+  Character(String)
   Integer(String)
   Float(String)
   Atom(name: String, quoted: Bool)
@@ -107,7 +107,7 @@ pub fn to_source(token: Token) -> String {
     ModuleComment(contents) -> "%%%" <> contents
     EndOfFile -> ""
 
-    Char(char) -> "$" <> char
+    Character(char) -> "$" <> char
     Integer(int) -> int
     Float(float) -> float
     Atom(name:, quoted: True) -> "'" <> name <> "'"

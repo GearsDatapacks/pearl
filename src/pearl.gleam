@@ -19,6 +19,7 @@ type Splitters {
     until_end_of_line: Splitter,
     string: Splitter,
     quoted_atom: Splitter,
+    brace_escape_sequence: Splitter,
   )
 }
 
@@ -30,6 +31,8 @@ pub type Error {
   NumericSeparatorNotAllowed
   ExpectedExponent
   NumbersCannotEndAfterRadix
+  UnterminatedCharacter
+  UnterminatedEscapeSequence
 }
 
 pub fn new(source: String) -> Lexer {
@@ -47,6 +50,7 @@ fn make_splitters() -> Splitters {
     until_end_of_line: splitter.new(["\n", "\r"]),
     string: splitter.new(["\"", "\\"]),
     quoted_atom: splitter.new(["'", "\\"]),
+    brace_escape_sequence: splitter.new(["}", "\n", "\r"]),
   )
 }
 
@@ -209,6 +213,8 @@ fn next(lexer: Lexer) -> #(Lexer, Token) {
     "\"" <> source -> lex_string(advance(lexer, source), "")
     "'" <> source -> lex_quoted_atom(advance(lexer, source), "")
 
+    "$" <> source -> lex_character(advance(lexer, source))
+
     _ ->
       case string.pop_grapheme(lexer.source) {
         Error(_) -> #(lexer, token.EndOfFile)
@@ -217,6 +223,178 @@ fn next(lexer: Lexer) -> #(Lexer, Token) {
           token.Unknown(char),
         )
       }
+  }
+}
+
+fn lex_character(lexer: Lexer) -> #(Lexer, Token) {
+  case lexer.source {
+    "\\" <> source -> {
+      let #(lexer, escape_sequence) =
+        lex_escape_sequence(advance(lexer, source))
+      #(lexer, token.Character("\\" <> escape_sequence))
+    }
+    _ ->
+      case string.pop_grapheme(lexer.source) {
+        Ok(#(source, char)) -> #(advance(lexer, source), token.Character(char))
+        Error(_) -> #(error(lexer, UnterminatedCharacter), token.Character(""))
+      }
+  }
+}
+
+fn lex_escape_sequence(lexer: Lexer) -> #(Lexer, String) {
+  case lexer.source {
+    "^a" as sequence <> source
+    | "^b" as sequence <> source
+    | "^c" as sequence <> source
+    | "^d" as sequence <> source
+    | "^e" as sequence <> source
+    | "^f" as sequence <> source
+    | "^g" as sequence <> source
+    | "^h" as sequence <> source
+    | "^i" as sequence <> source
+    | "^j" as sequence <> source
+    | "^k" as sequence <> source
+    | "^l" as sequence <> source
+    | "^m" as sequence <> source
+    | "^n" as sequence <> source
+    | "^o" as sequence <> source
+    | "^p" as sequence <> source
+    | "^q" as sequence <> source
+    | "^r" as sequence <> source
+    | "^s" as sequence <> source
+    | "^t" as sequence <> source
+    | "^u" as sequence <> source
+    | "^v" as sequence <> source
+    | "^w" as sequence <> source
+    | "^x" as sequence <> source
+    | "^y" as sequence <> source
+    | "^z" as sequence <> source
+    | "^A" as sequence <> source
+    | "^B" as sequence <> source
+    | "^C" as sequence <> source
+    | "^D" as sequence <> source
+    | "^E" as sequence <> source
+    | "^F" as sequence <> source
+    | "^G" as sequence <> source
+    | "^H" as sequence <> source
+    | "^I" as sequence <> source
+    | "^J" as sequence <> source
+    | "^K" as sequence <> source
+    | "^L" as sequence <> source
+    | "^M" as sequence <> source
+    | "^N" as sequence <> source
+    | "^O" as sequence <> source
+    | "^P" as sequence <> source
+    | "^Q" as sequence <> source
+    | "^R" as sequence <> source
+    | "^S" as sequence <> source
+    | "^T" as sequence <> source
+    | "^U" as sequence <> source
+    | "^V" as sequence <> source
+    | "^W" as sequence <> source
+    | "^X" as sequence <> source
+    | "^Y" as sequence <> source
+    | "^Z" as sequence <> source
+    | "^@" as sequence <> source
+    | "^[" as sequence <> source
+    | "^\\" as sequence <> source
+    | "^]" as sequence <> source
+    | "^^" as sequence <> source
+    | "^_" as sequence <> source
+    | "^?" as sequence <> source -> #(advance(lexer, source), sequence)
+
+    "x{" <> source -> lex_brace_escape_sequence(advance(lexer, source))
+    "x" <> source -> lex_hex_escape_sequence(advance(lexer, source))
+
+    "0" as char <> source
+    | "1" as char <> source
+    | "2" as char <> source
+    | "3" as char <> source
+    | "4" as char <> source
+    | "5" as char <> source
+    | "6" as char <> source
+    | "7" as char <> source ->
+      lex_octal_escape_sequence(advance(lexer, source), char)
+
+    _ ->
+      case string.pop_grapheme(lexer.source) {
+        Error(_) -> #(error(lexer, UnterminatedEscapeSequence), "")
+        Ok(#(source, char)) -> #(advance(lexer, source), char)
+      }
+  }
+}
+
+fn lex_octal_escape_sequence(lexer: Lexer, first: String) -> #(Lexer, String) {
+  case extract_octal_digit(lexer) {
+    Error(_) -> #(lexer, first)
+    Ok(#(lexer, second)) ->
+      case extract_octal_digit(lexer) {
+        Error(_) -> #(lexer, first <> second)
+        Ok(#(lexer, third)) -> #(lexer, first <> second <> third)
+      }
+  }
+}
+
+fn extract_octal_digit(lexer: Lexer) -> Result(#(Lexer, String), Nil) {
+  case lexer.source {
+    "0" as char <> source
+    | "1" as char <> source
+    | "2" as char <> source
+    | "3" as char <> source
+    | "4" as char <> source
+    | "5" as char <> source
+    | "6" as char <> source
+    | "7" as char <> source -> Ok(#(advance(lexer, source), char))
+    _ -> Error(Nil)
+  }
+}
+
+fn lex_hex_escape_sequence(lexer: Lexer) -> #(Lexer, String) {
+  case extract_hex_digit(lexer) {
+    Error(_) -> #(error(lexer, UnterminatedEscapeSequence), "x")
+    Ok(#(lexer, first)) ->
+      case extract_hex_digit(lexer) {
+        Error(_) -> #(error(lexer, UnterminatedEscapeSequence), "x" <> first)
+        Ok(#(lexer, second)) -> #(lexer, "x" <> first <> second)
+      }
+  }
+}
+
+fn extract_hex_digit(lexer: Lexer) -> Result(#(Lexer, String), Nil) {
+  case lexer.source {
+    "0" as char <> source
+    | "1" as char <> source
+    | "2" as char <> source
+    | "3" as char <> source
+    | "4" as char <> source
+    | "5" as char <> source
+    | "6" as char <> source
+    | "7" as char <> source
+    | "8" as char <> source
+    | "9" as char <> source
+    | "a" as char <> source
+    | "b" as char <> source
+    | "c" as char <> source
+    | "d" as char <> source
+    | "e" as char <> source
+    | "f" as char <> source
+    | "A" as char <> source
+    | "B" as char <> source
+    | "C" as char <> source
+    | "D" as char <> source
+    | "E" as char <> source
+    | "F" as char <> source -> Ok(#(advance(lexer, source), char))
+    _ -> Error(Nil)
+  }
+}
+
+fn lex_brace_escape_sequence(lexer: Lexer) -> #(Lexer, String) {
+  case splitter.split(lexer.splitters.brace_escape_sequence, lexer.source) {
+    #(before, "}", after) -> #(advance(lexer, after), "x{" <> before <> "}")
+    #(before, separator, after) -> #(
+      advance(error(lexer, UnterminatedEscapeSequence), separator <> after),
+      "x{" <> before,
+    )
   }
 }
 
