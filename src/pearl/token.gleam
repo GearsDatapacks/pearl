@@ -12,7 +12,7 @@ pub type Token {
   Atom(name: String, quoted: Bool)
   String(String)
   TripleQuotedString(contents: String, end_indentation: String)
-  Sigil(sigil: String, contents: String)
+  Sigil(sigil: String, delimiter: SigilDelimiter, contents: String)
   Variable(String)
 
   // Keywords
@@ -95,6 +95,7 @@ pub type Token {
   // Invalid tokens
   Unknown(String)
   UnterminatedString(String)
+  UnterminatedSigil(sigil: String, delimiter: SigilDelimiter, contents: String)
   UnterminatedAtom(String)
 }
 
@@ -115,7 +116,10 @@ pub fn to_source(token: Token) -> String {
     String(contents) -> "\"" <> contents <> "\""
     TripleQuotedString(contents:, end_indentation:) ->
       "\"\"\"\n" <> contents <> "\n" <> end_indentation <> "\"\"\""
-    Sigil(sigil:, contents:) -> "~" <> sigil <> "\"" <> contents <> "\""
+    Sigil(sigil:, delimiter:, contents:) -> {
+      let #(opening, closing) = sigil_delimiters(delimiter)
+      "~" <> sigil <> opening <> contents <> closing
+    }
     Variable(name) -> name
 
     // Keywords
@@ -198,6 +202,40 @@ pub fn to_source(token: Token) -> String {
     // Invalid tokens
     Unknown(char) -> char
     UnterminatedString(contents) -> "\"" <> contents
+    UnterminatedSigil(sigil:, contents:, delimiter:) -> {
+      let #(opening, _closing) = sigil_delimiters(delimiter)
+      "~" <> sigil <> opening <> contents
+    }
     UnterminatedAtom(contents) -> "'" <> contents
+  }
+}
+
+pub type SigilDelimiter {
+  SigilNone
+  SigilParen
+  SigilSquare
+  SigilBrace
+  SigilAngle
+  SigilSlash
+  SigilPipe
+  SigilSingleQuote
+  SigilDoubleQuote
+  SigilBacktick
+  SigilHash
+}
+
+pub fn sigil_delimiters(delimiter: SigilDelimiter) -> #(String, String) {
+  case delimiter {
+    SigilNone -> #("", "")
+    SigilAngle -> #("<", ">")
+    SigilBacktick -> #("`", "`")
+    SigilBrace -> #("{", "}")
+    SigilDoubleQuote -> #("\"", "\"")
+    SigilHash -> #("#", "#")
+    SigilParen -> #("(", ")")
+    SigilPipe -> #("|", "|")
+    SigilSingleQuote -> #("'", "'")
+    SigilSlash -> #("/", "/")
+    SigilSquare -> #("[", "]")
   }
 }

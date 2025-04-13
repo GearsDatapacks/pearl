@@ -20,6 +20,8 @@ type Splitters {
     string: Splitter,
     quoted_atom: Splitter,
     brace_escape_sequence: Splitter,
+    sigil: Splitter,
+    sigil_verbatim: Splitter,
   )
 }
 
@@ -33,6 +35,7 @@ pub type Error {
   NumbersCannotEndAfterRadix
   UnterminatedCharacter
   UnterminatedEscapeSequence
+  ExpectedSigilDelimiter
 }
 
 pub fn new(source: String) -> Lexer {
@@ -51,6 +54,12 @@ fn make_splitters() -> Splitters {
     string: splitter.new(["\"", "\\"]),
     quoted_atom: splitter.new(["'", "\\"]),
     brace_escape_sequence: splitter.new(["}", "\n", "\r"]),
+    sigil: splitter.new([
+      ")", "]", "}", ">", "/", "|", "'", "\"", "`", "#", "\\",
+    ]),
+    sigil_verbatim: splitter.new([
+      ")", "]", "}", ">", "/", "|", "'", "\"", "`", "#",
+    ]),
   )
 }
 
@@ -214,6 +223,8 @@ fn next(lexer: Lexer) -> #(Lexer, Token) {
     "'" <> source -> lex_quoted_atom(advance(lexer, source), "")
 
     "$" <> source -> lex_character(advance(lexer, source))
+
+    "~" <> source -> lex_sigil(advance(lexer, source))
 
     _ ->
       case string.pop_grapheme(lexer.source) {
@@ -557,6 +568,110 @@ fn lex_number(
         AfterSeparator -> #(error(lexer, NumericSeparatorNotAllowed), token)
       }
     }
+  }
+}
+
+fn lex_sigil(lexer: Lexer) -> #(Lexer, Token) {
+  let #(lexer, sigil, verbatim) = case lexer.source {
+    "b" as sigil <> source | "s" as sigil <> source -> #(
+      advance(lexer, source),
+      sigil,
+      False,
+    )
+
+    "B" as sigil <> source | "S" as sigil <> source -> #(
+      advance(lexer, source),
+      sigil,
+      True,
+    )
+    _ -> #(lexer, "", False)
+  }
+
+  let #(lexer, delimiter, closing_char) = case lexer.source {
+    "(" <> source -> #(advance(lexer, source), token.SigilParen, ")")
+    "[" <> source -> #(advance(lexer, source), token.SigilSquare, "]")
+    "{" <> source -> #(advance(lexer, source), token.SigilBrace, "}")
+    "<" <> source -> #(advance(lexer, source), token.SigilAngle, ">")
+
+    "/" <> source -> #(advance(lexer, source), token.SigilSlash, "/")
+    "|" <> source -> #(advance(lexer, source), token.SigilPipe, "|")
+    "'" <> source -> #(advance(lexer, source), token.SigilSingleQuote, "'")
+    "\"" <> source -> #(advance(lexer, source), token.SigilDoubleQuote, "\"")
+    "`" <> source -> #(advance(lexer, source), token.SigilBacktick, "`")
+    "#" <> source -> #(advance(lexer, source), token.SigilHash, "#")
+
+    _ -> #(error(lexer, ExpectedSigilDelimiter), token.SigilNone, "")
+  }
+
+  case delimiter {
+    token.SigilNone -> #(
+      lexer,
+      token.UnterminatedSigil(sigil:, delimiter:, contents: ""),
+    )
+    _ -> {
+      let splitter = case verbatim {
+        False -> lexer.splitters.sigil
+        True -> lexer.splitters.sigil_verbatim
+      }
+
+      do_lex_sigil(lexer, sigil, delimiter, closing_char, splitter, "")
+    }
+  }
+}
+
+fn do_lex_sigil(
+  lexer: Lexer,
+  sigil: String,
+  delimiter: token.SigilDelimiter,
+  closing_char: String,
+  splitter: Splitter,
+  contents: String,
+) -> #(Lexer, Token) {
+  let #(before, split, after) = splitter.split(splitter, lexer.source)
+  case split {
+    "" -> #(
+      error(advance(lexer, after), UnterminatedString),
+      token.UnterminatedSigil(sigil:, delimiter:, contents: contents <> before),
+    )
+
+    "\\" ->
+      case string.pop_grapheme(after) {
+        Error(_) -> #(
+          error(advance(lexer, after), UnterminatedString),
+          token.UnterminatedSigil(
+            sigil:,
+            delimiter:,
+            contents: contents <> before <> "\\",
+          ),
+        )
+        Ok(#(character, source)) ->
+          do_lex_sigil(
+            advance(lexer, source),
+            sigil,
+            delimiter,
+            closing_char,
+            splitter,
+            contents <> before <> "\\" <> character,
+          )
+      }
+
+    _ if split == closing_char -> #(
+      advance(lexer, after),
+      token.Sigil(sigil:, delimiter:, contents: contents <> before),
+    )
+
+    // Here, we've split on a delimiter which doesn't match the current sigil.
+    // In this case, we must continue lexing until we find a delimiter of the
+    // correct kind.
+    _ ->
+      do_lex_sigil(
+        advance(lexer, after),
+        sigil,
+        delimiter,
+        closing_char,
+        splitter,
+        contents <> before <> split,
+      )
   }
 }
 
