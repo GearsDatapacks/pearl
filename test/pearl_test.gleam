@@ -33,6 +33,18 @@ fn assert_errors(src: String, errors: List(pearl.Error)) -> Nil {
   assert found_errors == errors
 }
 
+pub fn stdlib_ffi_roundtrip_test() {
+  let assert Ok(stdlib_ffi_file) =
+    simplifile.read("build/packages/gleam_stdlib/src/gleam_stdlib.erl")
+
+  assert_roundtrip(stdlib_ffi_file, False)
+}
+
+pub fn tokens_roundtrip_test() {
+  let assert Ok(tokens_file) = simplifile.read("test/tokens.txt")
+  assert_roundtrip(tokens_file, False)
+}
+
 pub fn unknown_character_test() {
   let src = "a&b"
   assert_errors(src, [pearl.UnknownCharacter("&")])

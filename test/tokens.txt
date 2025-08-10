@@ -1,0 +1,86 @@
+% some kind of comment
+%% doc comment
+%%%mod comment
+
+$a
+1323 123_456_789 16#abc_def_138 2#101_101
+1.3 1.2e3_0
+hello@world 'Atom with? special-characters!'
+"A string!"
+"This one
+spans multiple
+
+lines!"
+~/I need "quotes"/ ~<This is also possible> ~b"Bit array"
+Variable Something_else@5
+
+after
+begin
+case
+catch
+cond
+else
+end
+fun
+if
+let
+maybe
+of
+receive
+try
+when
+(
+)
+{
+}
+[
+]
+,
+;
+:
+.
+->
+<<
+>>
+#
+::
+..
+...
+||
+=>
+:=
+<-
+<=
+|
+==
+/=
+=<
+<
+>=
+>
+=:=
+=/=
++
+-
+*
+/
+bnot
+div
+rem
+band
+bor
+bxor
+bsl
+bsr
+not
+and
+or
+xor
+andalso
+orelse
+++
+--
+?=
+?
+!
+=
