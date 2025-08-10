@@ -32,7 +32,7 @@ pub type Error {
   InvalidRadix(radix: String)
   NumericSeparatorNotAllowed
   ExpectedExponent
-  NumbersCannotEndAfterRadix
+  NumberCannotEndAfterRadix
   UnterminatedCharacter
   UnterminatedEscapeSequence
   ExpectedSigilDelimiter
@@ -73,6 +73,10 @@ pub fn ignore_whitespace(lexer: Lexer) -> Lexer {
 
 pub fn tokenise(lexer: Lexer) -> #(List(Token), List(Error)) {
   do_tokenise(lexer, [])
+}
+
+pub fn to_source(tokens: List(Token)) -> String {
+  list.fold(tokens, "", fn(code, token) { code <> token.to_source(token) })
 }
 
 fn do_tokenise(lexer: Lexer, tokens: List(Token)) -> #(List(Token), List(Error)) {
@@ -563,7 +567,7 @@ fn lex_number(
           token.Integer(string.drop_end(lexed, 1)),
         )
         AfterExponent -> #(error(lexer, ExpectedExponent), token)
-        AfterRadix -> #(error(lexer, NumbersCannotEndAfterRadix), token)
+        AfterRadix -> #(error(lexer, NumberCannotEndAfterRadix), token)
         AfterNumber -> #(lexer, token)
         AfterSeparator -> #(error(lexer, NumericSeparatorNotAllowed), token)
       }
@@ -684,18 +688,10 @@ fn lex_string(lexer: Lexer, contents: String) -> #(Lexer, Token) {
       token.UnterminatedString(contents <> before),
     )
 
-    "\\" ->
-      case string.pop_grapheme(after) {
-        Error(_) -> #(
-          error(advance(lexer, after), UnterminatedString),
-          token.UnterminatedString(contents),
-        )
-        Ok(#(character, source)) ->
-          lex_string(
-            advance(lexer, source),
-            contents <> before <> "\\" <> character,
-          )
-      }
+    "\\" -> {
+      let #(lexer, escape) = lex_escape_sequence(advance(lexer, after))
+      lex_string(lexer, contents <> before <> "\\" <> escape)
+    }
 
     _ -> #(advance(lexer, after), token.String(contents <> before))
   }
