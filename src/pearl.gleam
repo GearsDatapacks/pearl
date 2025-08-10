@@ -153,6 +153,7 @@ fn next(lexer: Lexer) -> #(Lexer, Token) {
     "*" <> source -> #(advance(lexer, source), token.Star)
     "/" <> source -> #(advance(lexer, source), token.Slash)
     "?=" <> source -> #(advance(lexer, source), token.QuestionEqual)
+    "?" <> source -> #(advance(lexer, source), token.Question)
     "!" <> source -> #(advance(lexer, source), token.Bang)
     "=" <> source -> #(advance(lexer, source), token.Equal)
 
@@ -250,7 +251,7 @@ fn lex_character(lexer: Lexer) -> #(Lexer, Token) {
     }
     _ ->
       case string.pop_grapheme(lexer.source) {
-        Ok(#(source, char)) -> #(advance(lexer, source), token.Character(char))
+        Ok(#(char, source)) -> #(advance(lexer, source), token.Character(char))
         Error(_) -> #(error(lexer, UnterminatedCharacter), token.Character(""))
       }
   }
@@ -334,7 +335,7 @@ fn lex_escape_sequence(lexer: Lexer) -> #(Lexer, String) {
     _ ->
       case string.pop_grapheme(lexer.source) {
         Error(_) -> #(error(lexer, UnterminatedEscapeSequence), "")
-        Ok(#(source, char)) -> #(advance(lexer, source), char)
+        Ok(#(char, source)) -> #(advance(lexer, source), char)
       }
   }
 }

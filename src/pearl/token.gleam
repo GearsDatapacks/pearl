@@ -89,6 +89,7 @@ pub type Token {
   DoublePlus
   DoubleMinus
   QuestionEqual
+  Question
   Bang
   Equal
 
@@ -196,6 +197,7 @@ pub fn to_source(token: Token) -> String {
     DoublePlus -> "++"
     DoubleMinus -> "--"
     QuestionEqual -> "?="
+    Question -> "?"
     Bang -> "!"
     Equal -> "="
 
