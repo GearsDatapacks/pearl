@@ -45,6 +45,56 @@ pub fn tokens_roundtrip_test() {
   assert_roundtrip(tokens_file, False)
 }
 
+pub fn numbers_test() {
+  let src =
+    "2.3E10 5.4e-3 16#ABCDEF 16#abcdef123 8#1234 2#101101 0123 0988 1_2_3_4_5
+1_2.3_4e-5_6 14#123_456_aBC"
+  assert_tokens(src, [
+    token.Float("2.3E10"),
+    token.Float("5.4e-3"),
+    token.Integer("16#ABCDEF"),
+    token.Integer("16#abcdef123"),
+    token.Integer("8#1234"),
+    token.Integer("2#101101"),
+    token.Integer("0123"),
+    token.Integer("0988"),
+    token.Integer("1_2_3_4_5"),
+    token.Float("1_2.3_4e-5_6"),
+    token.Integer("14#123_456_aBC"),
+  ])
+}
+
+pub fn atom_variable_test() {
+  let src = "this_is_an_atom This_is_a_variable 'This is an atom'"
+  assert_tokens(src, [
+    token.Atom("this_is_an_atom", False),
+    token.Variable("This_is_a_variable"),
+    token.Atom("This is an atom", True),
+  ])
+}
+
+pub fn sigil_test() {
+  let src =
+    "~B/This is a raw sigil\\/ ~<Bracketed, with escapes <\\>>
+~s|Sigil which allows \"quotes\"|"
+  assert_tokens(src, [
+    token.Sigil("B", token.SigilSlash, "This is a raw sigil\\"),
+    token.Sigil("", token.SigilAngle, "Bracketed, with escapes <\\>"),
+    token.Sigil("s", token.SigilPipe, "Sigil which allows \"quotes\""),
+  ])
+}
+
+pub fn character_literal_test() {
+  let src = "$\" $\\^_ $\\xAb $\\x{abcDe1} $\\41"
+  assert_tokens(src, [
+    token.Character("\""),
+    token.Character("\\^_"),
+    token.Character("\\xAb"),
+    token.Character("\\x{abcDe1}"),
+    token.Character("\\41"),
+  ])
+}
+
 pub fn unknown_character_test() {
   let src = "a&b"
   assert_errors(src, [pearl.UnknownCharacter("&")])
