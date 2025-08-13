@@ -1,0 +1,15 @@
+when:
+  - event: ["push", "pull_request"]
+    branch: ["main"]
+
+dependencies:
+  nixpkgs:
+    - gleam
+    - erlang_28
+
+steps:
+  - name: run all tests
+    command: |
+      gleam deps download
+      gleam test
+      gleam format --check src test
