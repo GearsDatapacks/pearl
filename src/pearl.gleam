@@ -1,5 +1,6 @@
 import gleam/int
 import gleam/list
+import gleam/option.{type Option, None, Some}
 import gleam/string
 import pearl/token.{type Token}
 import splitter.{type Splitter}
@@ -231,7 +232,7 @@ fn next(lexer: Lexer) -> #(Lexer, Token) {
     | "9" as char <> source ->
       lex_number(advance(lexer, source), char, Initial, AfterNumber)
 
-    "\"\"\"" <> source -> lex_triple_quoted_string(advance(lexer, source))
+    "\"\"\"" <> source -> lex_triple_quoted_string(advance(lexer, source), None)
 
     "\"" <> source -> lex_string(advance(lexer, source), "")
     "'" <> source -> lex_quoted_atom(advance(lexer, source), "")
@@ -601,34 +602,44 @@ fn lex_sigil(lexer: Lexer) -> #(Lexer, Token) {
     _ -> #(lexer, "", False)
   }
 
-  let #(lexer, delimiter, closing_char) = case lexer.source {
-    "(" <> source -> #(advance(lexer, source), token.SigilParen, ")")
-    "[" <> source -> #(advance(lexer, source), token.SigilSquare, "]")
-    "{" <> source -> #(advance(lexer, source), token.SigilBrace, "}")
-    "<" <> source -> #(advance(lexer, source), token.SigilAngle, ">")
-
-    "/" <> source -> #(advance(lexer, source), token.SigilSlash, "/")
-    "|" <> source -> #(advance(lexer, source), token.SigilPipe, "|")
-    "'" <> source -> #(advance(lexer, source), token.SigilSingleQuote, "'")
-    "\"" <> source -> #(advance(lexer, source), token.SigilDoubleQuote, "\"")
-    "`" <> source -> #(advance(lexer, source), token.SigilBacktick, "`")
-    "#" <> source -> #(advance(lexer, source), token.SigilHash, "#")
-
-    _ -> #(error(lexer, ExpectedSigilDelimiter), token.SigilNone, "")
-  }
-
-  case delimiter {
-    token.SigilNone -> #(
-      lexer,
-      token.UnterminatedSigil(sigil:, delimiter:, contents: ""),
-    )
+  case lexer.source {
+    "\"\"\"" <> source ->
+      lex_triple_quoted_string(advance(lexer, source), Some(sigil))
     _ -> {
-      let splitter = case verbatim {
-        False -> lexer.splitters.sigil
-        True -> lexer.splitters.sigil_verbatim
+      let #(lexer, delimiter, closing_char) = case lexer.source {
+        "(" <> source -> #(advance(lexer, source), token.SigilParen, ")")
+        "[" <> source -> #(advance(lexer, source), token.SigilSquare, "]")
+        "{" <> source -> #(advance(lexer, source), token.SigilBrace, "}")
+        "<" <> source -> #(advance(lexer, source), token.SigilAngle, ">")
+
+        "/" <> source -> #(advance(lexer, source), token.SigilSlash, "/")
+        "|" <> source -> #(advance(lexer, source), token.SigilPipe, "|")
+        "'" <> source -> #(advance(lexer, source), token.SigilSingleQuote, "'")
+        "\"" <> source -> #(
+          advance(lexer, source),
+          token.SigilDoubleQuote,
+          "\"",
+        )
+        "`" <> source -> #(advance(lexer, source), token.SigilBacktick, "`")
+        "#" <> source -> #(advance(lexer, source), token.SigilHash, "#")
+
+        _ -> #(error(lexer, ExpectedSigilDelimiter), token.SigilNone, "")
       }
 
-      do_lex_sigil(lexer, sigil, delimiter, closing_char, splitter, "")
+      case delimiter {
+        token.SigilNone -> #(
+          lexer,
+          token.UnterminatedSigil(sigil:, delimiter:, contents: ""),
+        )
+        _ -> {
+          let splitter = case verbatim {
+            False -> lexer.splitters.sigil
+            True -> lexer.splitters.sigil_verbatim
+          }
+
+          do_lex_sigil(lexer, sigil, delimiter, closing_char, splitter, "")
+        }
+      }
     }
   }
 }
@@ -707,7 +718,10 @@ fn lex_string(lexer: Lexer, contents: String) -> #(Lexer, Token) {
   }
 }
 
-fn lex_triple_quoted_string(lexer: Lexer) -> #(Lexer, Token) {
+fn lex_triple_quoted_string(
+  lexer: Lexer,
+  sigil: Option(String),
+) -> #(Lexer, Token) {
   let #(lexer, beginning_whitespace) = case
     splitter.split(lexer.splitters.until_end_of_line, lexer.source)
   {
@@ -742,7 +756,12 @@ fn lex_triple_quoted_string(lexer: Lexer) -> #(Lexer, Token) {
     }
     Ok(lines) -> #(
       lexer,
-      token.TripleQuotedString(beginning_whitespace:, lines:, end_indentation:),
+      token.TripleQuotedString(
+        sigil:,
+        beginning_whitespace:,
+        lines:,
+        end_indentation:,
+      ),
     )
   }
 }

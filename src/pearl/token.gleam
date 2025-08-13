@@ -1,4 +1,5 @@
 import gleam/list
+import gleam/option
 import gleam/string
 
 pub type Token {
@@ -15,6 +16,7 @@ pub type Token {
   Atom(name: String, quoted: Bool)
   String(String)
   TripleQuotedString(
+    sigil: option.Option(String),
     beginning_whitespace: String,
     lines: List(String),
     end_indentation: String,
@@ -123,8 +125,12 @@ pub fn to_source(token: Token) -> String {
     Atom(name:, quoted: True) -> "'" <> name <> "'"
     Atom(name:, quoted: False) -> name
     String(contents) -> "\"" <> contents <> "\""
-    TripleQuotedString(beginning_whitespace:, lines:, end_indentation:) ->
-      "\"\"\""
+    TripleQuotedString(sigil:, beginning_whitespace:, lines:, end_indentation:) ->
+      case sigil {
+        option.None -> ""
+        option.Some(sigil) -> "~" <> sigil
+      }
+      <> "\"\"\""
       <> beginning_whitespace
       <> string.join(
         list.map(lines, fn(line) { end_indentation <> line }),

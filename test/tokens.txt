@@ -20,6 +20,11 @@ Variable Something_else@5
   Three quotes allowed here: """ and here: """
   """
 
+~B""" 
+  Triple quote sigil!
+  bye
+  """
+
 after
 begin
 case

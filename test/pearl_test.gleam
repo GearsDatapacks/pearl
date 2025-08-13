@@ -1,4 +1,5 @@
 import gleam/list
+import gleam/option.{None, Some}
 import gleeunit
 import pearl
 import pearl/token
@@ -107,6 +108,7 @@ pub fn triple_quoted_string_test() {
 
   assert_tokens(src, [
     token.TripleQuotedString(
+      sigil: None,
       beginning_whitespace: "  \n",
       lines: [
         "Hello, this is triple-quoted!",
@@ -114,6 +116,25 @@ pub fn triple_quoted_string_test() {
         "Quotes are allowed: \"\", even three: \"\"\"",
       ],
       end_indentation: "\t ",
+    ),
+  ])
+}
+
+pub fn triple_quoted_string_sigil_test() {
+  let src =
+    "
+~b\"\"\"
+  Hello
+  This is a triple-quoted sigil
+  \"\"\"
+"
+
+  assert_tokens(src, [
+    token.TripleQuotedString(
+      sigil: Some("b"),
+      beginning_whitespace: "\n",
+      lines: ["Hello", "This is a triple-quoted sigil"],
+      end_indentation: "  ",
     ),
   ])
 }
