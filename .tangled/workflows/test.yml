@@ -11,5 +11,6 @@ steps:
   - name: run all tests
     command: |
       gleam deps download
-      gleam test
+      gleam test --target erlang
+      gleam test --target javascript
       gleam format --check src test
