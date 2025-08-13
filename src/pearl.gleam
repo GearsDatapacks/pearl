@@ -22,6 +22,7 @@ type Splitters {
     brace_escape_sequence: Splitter,
     sigil: Splitter,
     sigil_verbatim: Splitter,
+    triple_quoted_string: Splitter,
   )
 }
 
@@ -36,6 +37,11 @@ pub type Error {
   UnterminatedCharacter
   UnterminatedEscapeSequence
   ExpectedSigilDelimiter
+  ExpectedWhitespaceAfterTripleQuote
+  InvalidTripleQuotedStringIndentation(
+    expected_indentation: String,
+    line: String,
+  )
 }
 
 pub fn new(source: String) -> Lexer {
@@ -50,16 +56,17 @@ pub fn new(source: String) -> Lexer {
 
 fn make_splitters() -> Splitters {
   Splitters(
-    until_end_of_line: splitter.new(["\n", "\r"]),
+    until_end_of_line: splitter.new(["\n", "\r\n"]),
     string: splitter.new(["\"", "\\"]),
     quoted_atom: splitter.new(["'", "\\"]),
-    brace_escape_sequence: splitter.new(["}", "\n", "\r"]),
+    brace_escape_sequence: splitter.new(["}", "\n", "\r\n"]),
     sigil: splitter.new([
       ")", "]", "}", ">", "/", "|", "'", "\"", "`", "#", "\\",
     ]),
     sigil_verbatim: splitter.new([
       ")", "]", "}", ">", "/", "|", "'", "\"", "`", "#",
     ]),
+    triple_quoted_string: splitter.new(["\n", "\r\n", "\"\"\""]),
   )
 }
 
@@ -223,6 +230,8 @@ fn next(lexer: Lexer) -> #(Lexer, Token) {
     | "8" as char <> source
     | "9" as char <> source ->
       lex_number(advance(lexer, source), char, Initial, AfterNumber)
+
+    "\"\"\"" <> source -> lex_triple_quoted_string(advance(lexer, source))
 
     "\"" <> source -> lex_string(advance(lexer, source), "")
     "'" <> source -> lex_quoted_atom(advance(lexer, source), "")
@@ -695,6 +704,110 @@ fn lex_string(lexer: Lexer, contents: String) -> #(Lexer, Token) {
     }
 
     _ -> #(advance(lexer, after), token.String(contents <> before))
+  }
+}
+
+fn lex_triple_quoted_string(lexer: Lexer) -> #(Lexer, Token) {
+  let #(lexer, beginning_whitespace) = case
+    splitter.split(lexer.splitters.until_end_of_line, lexer.source)
+  {
+    #(_, "", _) -> #(error(lexer, ExpectedWhitespaceAfterTripleQuote), "")
+    #(before, newline, after) ->
+      case is_whitespace(before) {
+        True -> #(advance(lexer, after), before <> newline)
+        False -> #(error(lexer, ExpectedWhitespaceAfterTripleQuote), "")
+      }
+  }
+
+  let #(lexer, lines, end_indentation) =
+    lex_triple_quoted_string_contents(lexer, [], "")
+
+  case strip_line_prefixes(lines, end_indentation, []) {
+    Error(line) -> {
+      let contents =
+        beginning_whitespace
+        <> string.join(list.reverse(lines), "\n")
+        <> "\n"
+        <> end_indentation
+      #(
+        error(
+          lexer,
+          InvalidTripleQuotedStringIndentation(
+            expected_indentation: end_indentation,
+            line:,
+          ),
+        ),
+        token.InvalidTripleQuotedString(contents),
+      )
+    }
+    Ok(lines) -> #(
+      lexer,
+      token.TripleQuotedString(beginning_whitespace:, lines:, end_indentation:),
+    )
+  }
+}
+
+fn is_whitespace(string: String) -> Bool {
+  case string {
+    "" -> True
+    " " <> string
+    | "\n" <> string
+    | "\r" <> string
+    | "\t" <> string
+    | "\f" <> string -> is_whitespace(string)
+    _ -> False
+  }
+}
+
+fn strip_line_prefixes(
+  lines: List(String),
+  end_indentation: String,
+  acc: List(String),
+) -> Result(List(String), String) {
+  case lines {
+    [] -> Ok(acc)
+    [line, ..lines] ->
+      case strip_prefix(line, end_indentation) {
+        Ok(line) -> strip_line_prefixes(lines, end_indentation, [line, ..acc])
+        Error(_) -> Error(line)
+      }
+  }
+}
+
+@external(erlang, "pearl_ffi", "strip_prefix")
+@external(javascript, "./pearl_ffi.mjs", "strip_prefix")
+fn strip_prefix(string: String, prefix: String) -> Result(String, Nil)
+
+fn lex_triple_quoted_string_contents(
+  lexer: Lexer,
+  lines: List(String),
+  current_line: String,
+) -> #(Lexer, List(String), String) {
+  let #(before, split, after) =
+    splitter.split(lexer.splitters.triple_quoted_string, lexer.source)
+
+  let before = current_line <> before
+
+  case split {
+    "\"\"\"" ->
+      case is_whitespace(before) {
+        False ->
+          lex_triple_quoted_string_contents(
+            advance(lexer, after),
+            lines,
+            before <> "\"\"\"",
+          )
+        True -> #(advance(lexer, after), lines, before)
+      }
+
+    "\n" | "\r\n" ->
+      lex_triple_quoted_string_contents(
+        advance(lexer, after),
+        [before, ..lines],
+        "",
+      )
+
+    _ -> #(error(lexer, UnterminatedString), [before, ..lines], "")
   }
 }
 

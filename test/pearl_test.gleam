@@ -95,6 +95,29 @@ pub fn character_literal_test() {
   ])
 }
 
+pub fn triple_quoted_string_test() {
+  let src =
+    "
+\"\"\"  
+\t Hello, this is triple-quoted!
+\t  This line starts with a space
+\t Quotes are allowed: \"\", even three: \"\"\"
+\t \"\"\"
+"
+
+  assert_tokens(src, [
+    token.TripleQuotedString(
+      beginning_whitespace: "  \n",
+      lines: [
+        "Hello, this is triple-quoted!",
+        " This line starts with a space",
+        "Quotes are allowed: \"\", even three: \"\"\"",
+      ],
+      end_indentation: "\t ",
+    ),
+  ])
+}
+
 pub fn unknown_character_test() {
   let src = "a&b"
   assert_errors(src, [pearl.UnknownCharacter("&")])
@@ -211,4 +234,25 @@ pub fn missing_exponent_test() {
 pub fn missing_negative_exponent_test() {
   let src = "1.2e-"
   assert_errors(src, [pearl.ExpectedExponent])
+}
+
+pub fn missing_whitespace_after_triple_quote() {
+  let src =
+    "\"\"\"Hello
+\"\"\""
+  assert_errors(src, [pearl.ExpectedWhitespaceAfterTripleQuote])
+}
+
+pub fn invalid_triple_quoted_string_indentation() {
+  let src =
+    "\"\"\"
+ Hello
+    world
+   \"\"\""
+  assert_errors(src, [
+    pearl.InvalidTripleQuotedStringIndentation(
+      expected_indentation: "   ",
+      line: " Hello",
+    ),
+  ])
 }

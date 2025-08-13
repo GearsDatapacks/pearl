@@ -14,6 +14,12 @@ lines!"
 ~/I need "quotes"/ ~<This is also possible> ~b"Bit array"
 Variable Something_else@5
 
+"""   
+  Triple quoted!
+    This line is indented, and has quotes: ""
+  Three quotes allowed here: """ and here: """
+  """
+
 after
 begin
 case

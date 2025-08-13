@@ -1,3 +1,6 @@
+import gleam/list
+import gleam/string
+
 pub type Token {
   // Whitespace and comments
   Whitespace(String)
@@ -11,7 +14,11 @@ pub type Token {
   Float(String)
   Atom(name: String, quoted: Bool)
   String(String)
-  TripleQuotedString(contents: String, end_indentation: String)
+  TripleQuotedString(
+    beginning_whitespace: String,
+    lines: List(String),
+    end_indentation: String,
+  )
   Sigil(sigil: String, delimiter: SigilDelimiter, contents: String)
   Variable(String)
 
@@ -98,6 +105,7 @@ pub type Token {
   UnterminatedString(String)
   UnterminatedSigil(sigil: String, delimiter: SigilDelimiter, contents: String)
   UnterminatedAtom(String)
+  InvalidTripleQuotedString(contents: String)
 }
 
 pub fn to_source(token: Token) -> String {
@@ -115,8 +123,16 @@ pub fn to_source(token: Token) -> String {
     Atom(name:, quoted: True) -> "'" <> name <> "'"
     Atom(name:, quoted: False) -> name
     String(contents) -> "\"" <> contents <> "\""
-    TripleQuotedString(contents:, end_indentation:) ->
-      "\"\"\"\n" <> contents <> "\n" <> end_indentation <> "\"\"\""
+    TripleQuotedString(beginning_whitespace:, lines:, end_indentation:) ->
+      "\"\"\""
+      <> beginning_whitespace
+      <> string.join(
+        list.map(lines, fn(line) { end_indentation <> line }),
+        "\n",
+      )
+      <> "\n"
+      <> end_indentation
+      <> "\"\"\""
     Sigil(sigil:, delimiter:, contents:) -> {
       let #(opening, closing) = sigil_delimiters(delimiter)
       "~" <> sigil <> opening <> contents <> closing
@@ -209,6 +225,7 @@ pub fn to_source(token: Token) -> String {
       "~" <> sigil <> opening <> contents
     }
     UnterminatedAtom(contents) -> "'" <> contents
+    InvalidTripleQuotedString(contents) -> "\"\"\"" <> contents <> "\"\"\""
   }
 }
 
