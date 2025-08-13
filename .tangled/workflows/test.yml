@@ -6,6 +6,7 @@ dependencies:
   nixpkgs:
     - gleam
     - erlang_28
+    - nodejs_24
 
 steps:
   - name: run all tests
