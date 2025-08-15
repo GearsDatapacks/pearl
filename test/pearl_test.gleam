@@ -109,6 +109,7 @@ pub fn triple_quoted_string_test() {
   assert_tokens(src, [
     token.TripleQuotedString(
       sigil: None,
+      number_of_quotes: 3,
       beginning_whitespace: "  \n",
       lines: [
         "Hello, this is triple-quoted!",
@@ -132,9 +133,31 @@ pub fn triple_quoted_string_sigil_test() {
   assert_tokens(src, [
     token.TripleQuotedString(
       sigil: Some("b"),
+      number_of_quotes: 3,
       beginning_whitespace: "\n",
       lines: ["Hello", "This is a triple-quoted sigil"],
       end_indentation: "  ",
+    ),
+  ])
+}
+
+pub fn triple_quoted_string_more_quotes_test() {
+  let src =
+    "
+\"\"\"\"\"
+   This string has five quotes
+   so four are allowed:
+   \"\"\"\"
+   \"\"\"\"\"
+"
+
+  assert_tokens(src, [
+    token.TripleQuotedString(
+      sigil: None,
+      number_of_quotes: 5,
+      beginning_whitespace: "\n",
+      lines: ["This string has five quotes", "so four are allowed:", "\"\"\"\""],
+      end_indentation: "   ",
     ),
   ])
 }

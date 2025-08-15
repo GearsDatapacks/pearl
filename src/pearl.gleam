@@ -722,6 +722,8 @@ fn lex_triple_quoted_string(
   lexer: Lexer,
   sigil: Option(String),
 ) -> #(Lexer, Token) {
+  let #(lexer, extra_quotes) = count_extra_quotes(lexer, 0)
+
   let #(lexer, beginning_whitespace) = case
     splitter.split(lexer.splitters.until_end_of_line, lexer.source)
   {
@@ -734,7 +736,7 @@ fn lex_triple_quoted_string(
   }
 
   let #(lexer, lines, end_indentation) =
-    lex_triple_quoted_string_contents(lexer, [], "")
+    lex_triple_quoted_string_contents(lexer, [], "", extra_quotes)
 
   case strip_line_prefixes(lines, end_indentation, []) {
     Error(line) -> {
@@ -758,11 +760,19 @@ fn lex_triple_quoted_string(
       lexer,
       token.TripleQuotedString(
         sigil:,
+        number_of_quotes: extra_quotes + 3,
         beginning_whitespace:,
         lines:,
         end_indentation:,
       ),
     )
+  }
+}
+
+fn count_extra_quotes(lexer: Lexer, extra: Int) -> #(Lexer, Int) {
+  case lexer.source {
+    "\"" <> source -> count_extra_quotes(advance(lexer, source), extra + 1)
+    _ -> #(lexer, extra)
   }
 }
 
@@ -801,6 +811,7 @@ fn lex_triple_quoted_string_contents(
   lexer: Lexer,
   lines: List(String),
   current_line: String,
+  extra_quotes: Int,
 ) -> #(Lexer, List(String), String) {
   let #(before, split, after) =
     splitter.split(lexer.splitters.triple_quoted_string, lexer.source)
@@ -808,25 +819,49 @@ fn lex_triple_quoted_string_contents(
   let before = current_line <> before
 
   case split {
-    "\"\"\"" ->
+    "\"\"\"" -> {
+      let lexer = advance(lexer, after)
       case is_whitespace(before) {
         False ->
           lex_triple_quoted_string_contents(
-            advance(lexer, after),
+            lexer,
             lines,
             before <> "\"\"\"",
+            extra_quotes,
           )
-        True -> #(advance(lexer, after), lines, before)
+        True if extra_quotes == 0 -> #(lexer, lines, before)
+        True ->
+          case consume_extra_quotes(lexer, extra_quotes) {
+            Ok(lexer) -> #(lexer, lines, before)
+            Error(Nil) ->
+              lex_triple_quoted_string_contents(
+                lexer,
+                lines,
+                before <> "\"\"\"",
+                extra_quotes,
+              )
+          }
       }
+    }
 
     "\n" | "\r\n" ->
       lex_triple_quoted_string_contents(
         advance(lexer, after),
         [before, ..lines],
         "",
+        extra_quotes,
       )
 
     _ -> #(error(lexer, UnterminatedString), [before, ..lines], "")
+  }
+}
+
+fn consume_extra_quotes(lexer: Lexer, extra_quotes: Int) -> Result(Lexer, Nil) {
+  case extra_quotes, lexer.source {
+    0, _ -> Ok(lexer)
+    _, "\"" <> source ->
+      consume_extra_quotes(advance(lexer, source), extra_quotes - 1)
+    _, _ -> Error(Nil)
   }
 }
 

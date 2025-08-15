@@ -17,6 +17,7 @@ pub type Token {
   String(String)
   TripleQuotedString(
     sigil: option.Option(String),
+    number_of_quotes: Int,
     beginning_whitespace: String,
     lines: List(String),
     end_indentation: String,
@@ -125,12 +126,18 @@ pub fn to_source(token: Token) -> String {
     Atom(name:, quoted: True) -> "'" <> name <> "'"
     Atom(name:, quoted: False) -> name
     String(contents) -> "\"" <> contents <> "\""
-    TripleQuotedString(sigil:, beginning_whitespace:, lines:, end_indentation:) ->
+    TripleQuotedString(
+      sigil:,
+      number_of_quotes:,
+      beginning_whitespace:,
+      lines:,
+      end_indentation:,
+    ) ->
       case sigil {
         option.None -> ""
         option.Some(sigil) -> "~" <> sigil
       }
-      <> "\"\"\""
+      <> string.repeat("\"", number_of_quotes)
       <> beginning_whitespace
       <> string.join(
         list.map(lines, fn(line) { end_indentation <> line }),
@@ -138,7 +145,7 @@ pub fn to_source(token: Token) -> String {
       )
       <> "\n"
       <> end_indentation
-      <> "\"\"\""
+      <> string.repeat("\"", number_of_quotes)
     Sigil(sigil:, delimiter:, contents:) -> {
       let #(opening, closing) = sigil_delimiters(delimiter)
       "~" <> sigil <> opening <> contents <> closing

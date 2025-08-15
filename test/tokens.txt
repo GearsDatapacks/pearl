@@ -25,6 +25,18 @@ Variable Something_else@5
   bye
   """
 
+""""""
+  This string has six (6) quotes!
+  That means you can have five quotes just fine:
+  """""
+  And it's still valid. Six can also be here: """"""
+  """"""
+
+~""""
+  Here's a sigil with more than 3 quotes
+  It works fine
+  """"
+
 after
 begin
 case
