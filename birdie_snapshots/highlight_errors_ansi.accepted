@@ -1,0 +1,17 @@
+---
+version: 1.4.0
+title: highlight_errors_ansi
+---
+
+Unknown = &,
+Sigil = ~b/This sigil never
+terminates.
+
+
+---
+
+[0m
+[0m[0mUnknown[0m[0m [0m[35m=[39m[0m [0m[0m&[0m[0m,[0m[0m
+[0m[0mSigil[0m[0m [0m[35m=[39m[0m [0m[32m~b/This sigil never
+terminates.
+[39m

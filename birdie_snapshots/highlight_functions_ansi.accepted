@@ -1,0 +1,21 @@
+---
+version: 1.4.0
+title: highlight_functions_ansi
+---
+
+some_function/2
+module:function/1
+call_me_a_module:function()
+just_a_function()
+?MACRO(10)
+
+
+---
+
+[0m
+[0m[34msome_function[39m[0m/[0m[32m2[39m[0m
+[0m[36mmodule[39m[0m:[0m[34mfunction[39m[0m/[0m[32m1[39m[0m
+[0m[36mcall_me_a_module[39m[0m:[0m[34mfunction[39m[0m([0m[0m)[0m[0m
+[0m[34mjust_a_function[39m[0m([0m[0m)[0m[0m
+[0m[0m?[0m[34mMACRO[39m[0m([0m[32m10[39m[0m)[0m[0m
+[0m

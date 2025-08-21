@@ -1,0 +1,27 @@
+---
+version: 1.4.0
+title: highlight_basic_program_ansi
+---
+
+-module(hello_world).
+
+-export([main/0]).
+
+main() ->
+  Message = "Hello, world!",
+  print(Message),
+  nil.
+
+
+---
+
+[0m
+[0m[35m-[39m[34mmodule[39m[0m([0m[32mhello_world[39m[0m)[0m[0m.[0m[0m
+
+[0m[35m-[39m[34mexport[39m[0m([0m[0m[[0m[34mmain[39m[0m/[0m[32m0[39m[0m][0m[0m)[0m[0m.[0m[0m
+
+[0m[34mmain[39m[0m([0m[0m)[0m[0m [0m[0m->[0m[0m
+  [0m[0mMessage[0m[0m [0m[35m=[39m[0m [0m[32m"Hello, world!"[39m[0m,[0m[0m
+  [0m[34mprint[39m[0m([0m[0mMessage[0m[0m)[0m[0m,[0m[0m
+  [0m[32mnil[39m[0m.[0m[0m
+[0m

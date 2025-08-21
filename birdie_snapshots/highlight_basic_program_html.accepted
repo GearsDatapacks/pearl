@@ -1,0 +1,27 @@
+---
+version: 1.4.0
+title: highlight_basic_program_html
+---
+
+-module(hello_world).
+
+-export([main/0]).
+
+main() ->
+  Message = "Hello, world!",
+  print(Message),
+  nil.
+
+
+---
+
+
+<span class=hl-operator>-</span><span class=hl-function>module</span><span class=hl-punctuation>(</span><span class=hl-atom>hello_world</span><span class=hl-punctuation>)</span><span class=hl-punctuation>.</span>
+
+<span class=hl-operator>-</span><span class=hl-function>export</span><span class=hl-punctuation>(</span><span class=hl-punctuation>[</span><span class=hl-function>main</span><span class=hl-punctuation>/</span><span class=hl-number>0</span><span class=hl-punctuation>]</span><span class=hl-punctuation>)</span><span class=hl-punctuation>.</span>
+
+<span class=hl-function>main</span><span class=hl-punctuation>(</span><span class=hl-punctuation>)</span> <span class=hl-punctuation>-&gt;</span>
+  <span class=hl-variable>Message</span> <span class=hl-operator>=</span> <span class=hl-string>&quot;Hello, world!&quot;</span><span class=hl-punctuation>,</span>
+  <span class=hl-function>print</span><span class=hl-punctuation>(</span><span class=hl-variable>Message</span><span class=hl-punctuation>)</span><span class=hl-punctuation>,</span>
+  <span class=hl-atom>nil</span><span class=hl-punctuation>.</span>
+

@@ -324,7 +324,7 @@ fn do_to_tokens(in: List(t.Token), out: List(Token)) -> List(Token) {
       do_to_tokens(in, [String("\"" <> contents), ..out])
     [t.UnterminatedSigil(sigil:, contents:, delimiter:), ..in] ->
       do_to_tokens(in, [
-        Variable({
+        String({
           let #(opening, _closing) = t.sigil_delimiters(delimiter)
           "~" <> sigil <> opening <> contents
         }),

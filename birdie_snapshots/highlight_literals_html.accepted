@@ -1,0 +1,37 @@
+---
+version: 1.4.0
+title: highlight_literals_html
+---
+
+$\^?
+"Hello, world!"
+atom
+'Complex atom!'
+~/I'm a sigil/
+""""
+  Triple quoted
+  string with four quotes
+  """"
+Some_variable
+16#C0de
+123_456
+12_3.6e-20
+
+
+---
+
+
+<span class=hl-string>$\^?</span>
+<span class=hl-string>&quot;Hello, world!&quot;</span>
+<span class=hl-atom>atom</span>
+<span class=hl-atom>&#39;Complex atom!&#39;</span>
+<span class=hl-string>~/I&#39;m a sigil/</span>
+<span class=hl-string>&quot;&quot;&quot;&quot;
+  Triple quoted
+  string with four quotes
+  &quot;&quot;&quot;&quot;</span>
+<span class=hl-variable>Some_variable</span>
+<span class=hl-number>16#C0de</span>
+<span class=hl-number>123_456</span>
+<span class=hl-number>12_3.6e-20</span>
+

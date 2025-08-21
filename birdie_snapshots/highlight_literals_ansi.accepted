@@ -1,0 +1,37 @@
+---
+version: 1.4.0
+title: highlight_literals_ansi
+---
+
+$\^?
+"Hello, world!"
+atom
+'Complex atom!'
+~/I'm a sigil/
+""""
+  Triple quoted
+  string with four quotes
+  """"
+Some_variable
+16#C0de
+123_456
+12_3.6e-20
+
+
+---
+
+[0m
+[0m[32m$\^?[39m[0m
+[0m[32m"Hello, world!"[39m[0m
+[0m[32matom[39m[0m
+[0m[32m'Complex atom!'[39m[0m
+[0m[32m~/I'm a sigil/[39m[0m
+[0m[32m""""
+  Triple quoted
+  string with four quotes
+  """"[39m[0m
+[0m[0mSome_variable[0m[0m
+[0m[32m16#C0de[39m[0m
+[0m[32m123_456[39m[0m
+[0m[32m12_3.6e-20[39m[0m
+[0m
