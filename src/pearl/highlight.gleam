@@ -19,6 +19,7 @@ pub type Token {
   String(String)
   Atom(String)
   Number(String)
+  Module(String)
   Function(String)
   Operator(String)
   Comment(String)
@@ -32,11 +33,11 @@ pub type Token {
 /// | Token                  | Colour      |
 /// | ---------------------- | ----------- |
 /// | Keyword                | Yellow      |
-/// | Class                  | Cyan        |
+/// | Module                 | Cyan        |
 /// | Function               | Blue        |
 /// | Operator               | Magenta     |
 /// | Comment                | Italic grey |
-/// | String, Number, Regexp | Green       |
+/// | String, Number, Atom   | Green       |
 /// | Whitespace, Variable   | No colour   |
 ///
 /// If you wish to use other colours or another format, use `to_tokens`.
@@ -52,6 +53,7 @@ pub fn ansi(code: String) -> String {
       String(s) -> ansi.green(s)
       Atom(s) -> ansi.green(s)
       Number(s) -> ansi.green(s)
+      Module(s) -> ansi.cyan(s)
       Function(s) -> ansi.blue(s)
       Operator(s) -> ansi.magenta(s)
       Comment(s) -> ansi.italic(ansi.gray(s))
@@ -69,13 +71,13 @@ pub fn ansi(code: String) -> String {
 /// | ----------- | -------------- |
 /// | Keyword     | hl-keyword     |
 /// | Variable    | hl-variable    |
-/// | Class       | hl-class       |
+/// | Module      | hl-module      |
 /// | Function    | hl-function    |
 /// | Operator    | hl-operator    |
 /// | Punctuation | hl-punctuation |
 /// | Comment     | hl-comment     |
 /// | String      | hl-string      |
-/// | Regexp      | hl-regexp      |
+/// | Atom        | hl-atom        |
 /// | Number      | hl-number      |
 /// | Whitespace  | no class       |
 ///
@@ -110,6 +112,8 @@ pub fn html(code: String) -> String {
       Atom(s) -> acc <> "<span class=hl-atom>" <> houdini.escape(s) <> "</span>"
       Number(s) ->
         acc <> "<span class=hl-number>" <> houdini.escape(s) <> "</span>"
+      Module(s) ->
+        acc <> "<span class=hl-module>" <> houdini.escape(s) <> "</span>"
       Function(s) ->
         acc <> "<span class=hl-function>" <> houdini.escape(s) <> "</span>"
       Operator(s) ->
@@ -138,6 +142,47 @@ pub fn tokens(code: String) -> List(Token) {
 fn do_to_tokens(in: List(t.Token), out: List(Token)) -> List(Token) {
   case in {
     [] -> list.reverse(out)
+
+    // Specific constructs
+    [t.Atom(value, quoted: False), t.LeftParen, ..in] ->
+      do_to_tokens(in, [Punctuation("("), Function(value), ..out])
+    [t.Atom(function, quoted: False), t.Slash, t.Integer(arity), ..in] ->
+      do_to_tokens(in, [
+        Number(arity),
+        Punctuation("/"),
+        Function(function),
+        ..out
+      ])
+    [
+      t.Atom(module, quoted: False),
+      t.Colon,
+      t.Atom(function, quoted: False),
+      t.Slash,
+      t.Integer(arity),
+      ..in
+    ] ->
+      do_to_tokens(in, [
+        Number(arity),
+        Punctuation("/"),
+        Function(function),
+        Punctuation(":"),
+        Module(module),
+        ..out
+      ])
+    [
+      t.Atom(module, quoted: False),
+      t.Colon,
+      t.Atom(function, quoted: False),
+      ..in
+    ] ->
+      do_to_tokens(in, [
+        Function(function),
+        Punctuation(":"),
+        Module(module),
+        ..out
+      ])
+    [t.Question, t.Variable(macro_name), ..in] ->
+      do_to_tokens(in, [Function(macro_name), Punctuation("?"), ..out])
 
     // Whitespace and comments
     [t.Whitespace(space), ..in] -> do_to_tokens(in, [Whitespace(space), ..out])
