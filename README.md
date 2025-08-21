@@ -21,7 +21,12 @@ import pearl
 import pearl/highlight
 
 pub fn main() {
-  let code = "console.log('Hello, world!');"
+  let code = "
+-module(hello).
+-export([hello_world/0]).
+
+hello_world() -> io:fwrite(\"Hello, world!\\n\").
+"
 
   let lexer = pearl.new(code)
   // Lex syntax tokens for parsing or other uses
