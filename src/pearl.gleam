@@ -46,6 +46,31 @@ pub type Error {
   )
 }
 
+pub fn stringify_error(error: Error) -> String {
+  case error {
+    ErrorUnterminatedAtom -> "Unterminated atom"
+    ErrorUnterminatedString -> "Unterminated string literal"
+    ExpectedExponent -> "Expected an exponent"
+    ExpectedSigilDelimiter -> "Expected a valid sigil delimiter after `~`"
+    ExpectedWhitespaceAfterTripleQuote ->
+      "Expected whitespace after a triple quote"
+    InvalidRadix(radix:) -> "Invalid numeric radix: " <> radix
+    InvalidTripleQuotedStringIndentation(expected_indentation:, line:) ->
+      "Invalid triple-quoted string: Expected the indentation `"
+      <> expected_indentation
+      <> "` preceding the line `"
+      <> line
+      <> "`"
+    NumberCannotEndAfterRadix ->
+      "Number cannot end directly after radix specification"
+    NumericSeparatorNotAllowed -> "Numeric separator is not allowed here"
+    UnknownCharacter(character:) ->
+      "Unexpected character: `" <> character <> "`"
+    UnterminatedCharacter -> "Unterminated character literal"
+    UnterminatedEscapeSequence -> "Unterminated escape sequence"
+  }
+}
+
 pub type Token {
   // Whitespace and comments
   Whitespace(String)
