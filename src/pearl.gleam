@@ -30,8 +30,8 @@ type Splitters {
 
 pub type Error {
   UnknownCharacter(character: String)
-  ErrorUnterminatedString
-  ErrorUnterminatedAtom
+  UnterminatedStringLiteral
+  UnterminatedQuotedAtom
   InvalidRadix(radix: String)
   NumericSeparatorNotAllowed
   ExpectedExponent
@@ -48,8 +48,8 @@ pub type Error {
 
 pub fn stringify_error(error: Error) -> String {
   case error {
-    ErrorUnterminatedAtom -> "Unterminated atom"
-    ErrorUnterminatedString -> "Unterminated string literal"
+    UnterminatedQuotedAtom -> "Unterminated quoted atom"
+    UnterminatedStringLiteral -> "Unterminated string literal"
     ExpectedExponent -> "Expected an exponent"
     ExpectedSigilDelimiter -> "Expected a valid sigil delimiter after `~`"
     ExpectedWhitespaceAfterTripleQuote ->
@@ -947,14 +947,14 @@ fn do_lex_sigil(
   let #(before, split, after) = splitter.split(splitter, lexer.source)
   case split {
     "" -> #(
-      error(advance(lexer, after), ErrorUnterminatedString),
+      error(advance(lexer, after), UnterminatedStringLiteral),
       UnterminatedSigil(sigil:, delimiter:, contents: contents <> before),
     )
 
     "\\" ->
       case string.pop_grapheme(after) {
         Error(_) -> #(
-          error(advance(lexer, after), ErrorUnterminatedString),
+          error(advance(lexer, after), UnterminatedStringLiteral),
           UnterminatedSigil(
             sigil:,
             delimiter:,
@@ -997,7 +997,7 @@ fn lex_string(lexer: Lexer, contents: String) -> #(Lexer, Token) {
     splitter.split(lexer.splitters.string, lexer.source)
   case split {
     "" -> #(
-      error(advance(lexer, after), ErrorUnterminatedString),
+      error(advance(lexer, after), UnterminatedStringLiteral),
       UnterminatedString(contents <> before),
     )
 
@@ -1144,7 +1144,7 @@ fn lex_triple_quoted_string_contents(
         extra_quotes,
       )
 
-    _ -> #(error(lexer, ErrorUnterminatedString), [before, ..lines], "")
+    _ -> #(error(lexer, UnterminatedStringLiteral), [before, ..lines], "")
   }
 }
 
@@ -1162,14 +1162,14 @@ fn lex_quoted_atom(lexer: Lexer, contents: String) -> #(Lexer, Token) {
     splitter.split(lexer.splitters.quoted_atom, lexer.source)
   case split {
     "" -> #(
-      error(advance(lexer, after), ErrorUnterminatedAtom),
+      error(advance(lexer, after), UnterminatedQuotedAtom),
       UnterminatedAtom(contents <> before),
     )
 
     "\\" ->
       case string.pop_grapheme(after) {
         Error(_) -> #(
-          error(advance(lexer, after), ErrorUnterminatedString),
+          error(advance(lexer, after), UnterminatedStringLiteral),
           UnterminatedString(contents),
         )
         Ok(#(character, source)) ->

@@ -169,19 +169,19 @@ pub fn unknown_character_test() {
 
 pub fn unterminated_string_eof_test() {
   let src = "\"Some string that doesn't end"
-  assert_errors(src, [pearl.ErrorUnterminatedString])
+  assert_errors(src, [pearl.UnterminatedStringLiteral])
 }
 
 pub fn unterminated_string_newline_test() {
   let src =
     "\"Some string that tries
 to continue on the next line"
-  assert_errors(src, [pearl.ErrorUnterminatedString])
+  assert_errors(src, [pearl.UnterminatedStringLiteral])
 }
 
 pub fn unterminated_atom_test() {
   let src = "'This is an atom!"
-  assert_errors(src, [pearl.ErrorUnterminatedAtom])
+  assert_errors(src, [pearl.UnterminatedQuotedAtom])
 }
 
 pub fn invalid_radix_test() {
@@ -223,7 +223,7 @@ pub fn unterminated_escape_sequence3_test() {
   let src = "\"\\x{123\""
   assert_errors(src, [
     pearl.UnterminatedEscapeSequence,
-    pearl.ErrorUnterminatedString,
+    pearl.UnterminatedStringLiteral,
   ])
 }
 
@@ -231,7 +231,7 @@ pub fn unterminated_escape_sequence4_test() {
   let src = "\"\\"
   assert_errors(src, [
     pearl.UnterminatedEscapeSequence,
-    pearl.ErrorUnterminatedString,
+    pearl.UnterminatedStringLiteral,
   ])
 }
 
