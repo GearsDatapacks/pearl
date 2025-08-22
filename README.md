@@ -5,15 +5,14 @@ An Erlang lexer and syntax highlighter for Gleam!
 [![Package Version](https://img.shields.io/hexpm/v/pearl)](https://hex.pm/packages/pearl)
 [![Hex Docs](https://img.shields.io/badge/hex-docs-ffaff3)](https://hexdocs.pm/pearl/)
 
-Pearl is a lexer and syntax highlighter for Erlang, written in Gleam.  
-The `pearl` module, based on [`glexer`](https://hexdocs.mp/glexer) and
-[`just`](https://hexdocs.mp/just), exposes a
-standard lexer API, allowing you to convert Erlang source code into tokens.  
-The `pearl/highlight` module allows you to highlight Erlang code using ansi
-colours, html or a custom format. Heavily inspired by [`contour`](https://hexdocs.pm/contour).
+Pearl is a lexer and syntax highlighter for Erlang, written in Gleam. The lexer
+is based on [`glexer`](https://hexdocs.mp/glexer) and [`just`](https://hexdocs.mp/just),
+allowing you to convert Erlang source code into tokens. There is also an API
+which allows you to highlight Erlang code using ansi colours, html or a custom
+format. Heavily inspired by [`contour`](https://hexdocs.pm/contour).
 
 ```sh
-gleam add pearl@1
+gleam add pearl@2
 ```
 
 ```gleam
