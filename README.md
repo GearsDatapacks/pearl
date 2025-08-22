@@ -18,7 +18,6 @@ gleam add pearl@1
 
 ```gleam
 import pearl
-import pearl/highlight
 
 pub fn main() {
   let code = "
@@ -35,15 +34,15 @@ hello_world() -> io:fwrite(\"Hello, world!\\n\").
   parse_erlang(tokens)
 
   // Highlight with ansi codes to print in the terminal
-  let highlighted = highlight.ansi(code)
+  let highlighted = pearl.highlight_ansi(code)
   io.println(highlighted)
 
   // Render to html to show in the browser
-  let html = highlight.html(code)
+  let html = pearl.highlight_html(code)
   io.println("<pre><code>" <> html <> "</code></pre>")
 
   // Convert to "highlighting tokens" to highlight in some other way
-  let highlight_tokens = highlight.tokens(code)
+  let highlight_tokens = pearl.highlight_tokens(code)
   highlight_tokens_some_other_way(highlight_tokens)
 }
 ```
