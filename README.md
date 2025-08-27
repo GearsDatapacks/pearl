@@ -6,7 +6,7 @@ An Erlang lexer and syntax highlighter for Gleam!
 [![Hex Docs](https://img.shields.io/badge/hex-docs-ffaff3)](https://hexdocs.pm/pearl/)
 
 Pearl is a lexer and syntax highlighter for Erlang, written in Gleam. The lexer
-is based on [`glexer`](https://hexdocs.mp/glexer) and [`just`](https://hexdocs.mp/just),
+is based on [`glexer`](https://hexdocs.pm/glexer) and [`just`](https://hexdocs.pm/just),
 allowing you to convert Erlang source code into tokens. There is also an API
 which allows you to highlight Erlang code using ansi colours, html or a custom
 format. Heavily inspired by [`contour`](https://hexdocs.pm/contour).
