@@ -1418,8 +1418,8 @@ pub fn highlight_ansi(code: String) -> String {
 /// pre code .hl-operator { color: #ffaff3 }
 /// pre code .hl-string   { color: #c8ffa7 }
 /// pre code .hl-number   { color: #c8ffa7 }
-/// pre code .hl-regexp   { color: #c8ffa7 }
-/// pre code .hl-class    { color: #ffddfa }
+/// pre code .hl-atom     { color: #c8ffa7 }
+/// pre code .hl-module   { color: #ffddfa }
 /// ```
 ///
 /// If you wish to use another format see `to_ansi` or `to_tokens`.
