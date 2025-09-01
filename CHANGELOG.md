@@ -1,5 +1,9 @@
 # Changelog
 
+## v2.1.0 - 2025-09-01
+
+- Improved the performance of lexing comments and escape sequences.
+
 ## v2.0.0 - 2025-08-22
 
 - Merged the `pearl/token` and `pearl/highlight` modules into one `pearl` module.
