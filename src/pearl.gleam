@@ -628,7 +628,7 @@ fn lex_escape_sequence(lexer: Lexer) -> #(Lexer, String) {
     | "^_" as sequence <> source
     | "^?" as sequence <> source -> #(advance(lexer, source), sequence)
 
-    "x{" <> source -> lex_brace_escape_sequence(advance(lexer, source))
+    "x{" <> _source -> lex_brace_escape_sequence(lexer)
     "x" <> source -> lex_hex_escape_sequence(advance(lexer, source))
 
     "0" as char <> source
@@ -714,12 +714,11 @@ fn extract_hex_digit(lexer: Lexer) -> Result(#(Lexer, String), Nil) {
 }
 
 fn lex_brace_escape_sequence(lexer: Lexer) -> #(Lexer, String) {
-  case splitter.split(lexer.splitters.brace_escape_sequence, lexer.source) {
-    #(before, "}", after) -> #(advance(lexer, after), "x{" <> before <> "}")
-    #(before, separator, after) -> #(
-      advance(error(lexer, UnterminatedEscapeSequence), separator <> after),
-      "x{" <> before,
-    )
+  case
+    splitter.split_after(lexer.splitters.brace_escape_sequence, lexer.source)
+  {
+    #(before, "") -> #(error(lexer, UnterminatedEscapeSequence), before)
+    #(before, after) -> #(advance(lexer, after), before)
   }
 }
 
@@ -1300,9 +1299,9 @@ fn lex_atom(lexer: Lexer, char: String) -> #(Lexer, Token) {
 }
 
 fn lex_until_end_of_line(lexer: Lexer) -> #(Lexer, String) {
-  let #(before, split, after) =
-    splitter.split(lexer.splitters.until_end_of_line, lexer.source)
-  #(advance(lexer, split <> after), before)
+  let #(before, after) =
+    splitter.split_after(lexer.splitters.until_end_of_line, lexer.source)
+  #(advance(lexer, after), before)
 }
 
 fn lex_whitespace(lexer: Lexer, lexed: String) -> #(Lexer, Token) {

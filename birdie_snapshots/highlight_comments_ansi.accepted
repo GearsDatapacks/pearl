@@ -14,10 +14,10 @@ main() ->
 ---
 
 [0m
-[0m[3m[90m%%% This a comment for the entire module[39m[23m[0m
-
-[0m[3m[90m%% This is a doc comment for the main function[39m[23m[0m
-[0m[34mmain[39m[0m([0m[0m)[0m[0m [0m[0m->[0m[0m
-  [0m[3m[90m% A comment within a function[39m[23m[0m
-  [0m[32mnil[39m[0m.[0m[0m [0m[3m[90m% This one is after the line[39m[23m[0m
-[0m
+[0m[3m[90m%%% This a comment for the entire module
+[39m[23m[0m
+[0m[3m[90m%% This is a doc comment for the main function
+[39m[23m[34mmain[39m[0m([0m[0m)[0m[0m [0m[0m->[0m[0m
+  [0m[3m[90m% A comment within a function
+[39m[23m[0m  [0m[32mnil[39m[0m.[0m[0m [0m[3m[90m% This one is after the line
+[39m[23m

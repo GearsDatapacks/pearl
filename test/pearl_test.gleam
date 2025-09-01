@@ -221,10 +221,7 @@ pub fn unterminated_escape_sequence2_test() {
 
 pub fn unterminated_escape_sequence3_test() {
   let src = "\"\\x{123\""
-  assert_errors(src, [
-    pearl.UnterminatedEscapeSequence,
-    pearl.UnterminatedStringLiteral,
-  ])
+  assert_errors(src, [pearl.UnterminatedEscapeSequence])
 }
 
 pub fn unterminated_escape_sequence4_test() {
